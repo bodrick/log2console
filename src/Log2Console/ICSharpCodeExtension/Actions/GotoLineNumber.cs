@@ -14,12 +14,13 @@ namespace Log2Console.ICSharpCodeExtension.Actions
 
         public override void Execute(TextArea textArea)
         {
-            var position = textArea.Caret.Position;
+            TextLocation position = textArea.Caret.Position;
             position.Line = _line;
 
             textArea.Caret.Position = position;
             textArea.SelectionManager.ClearSelection();
             textArea.SetDesiredColumn();
+            
         }
     }
 }
