@@ -3,90 +3,11 @@
     <TargetFramework>net462</TargetFramework>
     <Configurations>Debug;Release</Configurations>
     <OutputType>WinExe</OutputType>
-    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
-    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
-    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-    <UseVSHostingProcess>true</UseVSHostingProcess>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRules />
-    <RunCodeAnalysis>false</RunCodeAnalysis>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <SccProjectName>%24/log2console/src/Log2Console</SccProjectName>
-    <SccLocalPath>.</SccLocalPath>
-    <SccAuxPath>https://tfs.codeplex.com/tfs/tfs04</SccAuxPath>
-    <SccProvider>{4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}</SccProvider>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{EE81C506-55E4-417E-B1D6-09453F89C7CD}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Log2Console</RootNamespace>
-    <AssemblyName>Log2Console</AssemblyName>
-    <ApplicationIcon>res/windowb.ico</ApplicationIcon>
-    <ManifestCertificateThumbprint>734B2D84C6B094EB368104E29886FB3793CCF867</ManifestCertificateThumbprint>
-    <ManifestKeyFile>Log2Console_TemporaryKey.pfx</ManifestKeyFile>
-    <GenerateManifests>false</GenerateManifests>
-    <SignManifests>false</SignManifests>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <SccProjectName>%24/log2console/src/Log2Console</SccProjectName>
-    <SccLocalPath>.</SccLocalPath>
-    <SccAuxPath>https://tfs.codeplex.com/tfs/tfs04</SccAuxPath>
-    <SccProvider>{4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}</SccProvider>
-    <TargetZone>LocalIntranet</TargetZone>
-    <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile />
-    <FileUpgradeFlags />
-    <OldToolsVersion>3.5</OldToolsVersion>
-    <UpgradeBackupLocation />
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
-    <PublishUrl>ftp://remserver/htdocs/log2console/</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>true</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <SupportUrl>http://www.codeplex.com/log2console/Thread/List.aspx</SupportUrl>
-    <ProductName>Log2Console</ProductName>
-    <PublisherName>Remy Baudet aka Statyk7</PublisherName>
-    <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>0.2.2907.%2a</ApplicationVersion>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <PublishWizardCompleted>true</PublishWizardCompleted>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <Version>1.6.0.4</Version>
+    <Authors>Remy Baudet aka Statyk7</Authors>
+    <Company />
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.8" />
@@ -162,33 +83,30 @@
     <Compile Update="UI\ToolStripControl.cs">
       <SubType>Component</SubType>
     </Compile>
-    <None Include="App.config">
-      <SubType>Designer</SubType>
-    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Include="res\back16.png" />
-    <None Include="res\cd16.png" />
-    <None Include="res\close16.png" />
-    <None Include="res\configure16.png" />
-    <None Include="res\delete16.png" />
-    <None Include="res\deletefile16.png" />
-    <None Include="res\documentsorcopy16.png" />
-    <None Include="res\find16.png" />
-    <None Include="res\gotoapp16.png" />
-    <None Include="res\infoabout16.png" />
-    <None Include="res\next16.png" />
-    <None Include="res\window16.png" />
-    <None Include="res\windowb.ico" />
-    <None Include="res\zoomin16.png" />
-    <None Include="res\zoomout16.png" />
-    <None Include="res\burn16.png" />
-    <None Include="res\unselect.png" />
-    <None Include="res\backward16.png" />
-    <None Include="res\forward16.png" />
-    <None Include="res\movefile16.png" />
+    <Content Include="res\back16.png" />
+    <Content Include="res\cd16.png" />
+    <Content Include="res\close16.png" />
+    <Content Include="res\configure16.png" />
+    <Content Include="res\delete16.png" />
+    <Content Include="res\deletefile16.png" />
+    <Content Include="res\documentsorcopy16.png" />
+    <Content Include="res\find16.png" />
+    <Content Include="res\gotoapp16.png" />
+    <Content Include="res\infoabout16.png" />
+    <Content Include="res\next16.png" />
+    <Content Include="res\window16.png" />
+    <Content Include="res\windowb.ico" />
+    <Content Include="res\zoomin16.png" />
+    <Content Include="res\zoomout16.png" />
+    <Content Include="res\burn16.png" />
+    <Content Include="res\unselect.png" />
+    <Content Include="res\backward16.png" />
+    <Content Include="res\forward16.png" />
+    <Content Include="res\movefile16.png" />
     <Content Include="res\collapse_all.png" />
     <Content Include="res\Go16.png" />
     <Content Include="res\Pause16.png" />
