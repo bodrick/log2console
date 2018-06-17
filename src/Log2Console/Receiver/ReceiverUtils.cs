@@ -196,9 +196,17 @@ namespace Log2Console.Receiver
         /// Implementation inspired from: http://geekswithblogs.net/kobush/archive/2006/04/20/75717.aspx
         public static LogMessage ParseLog4JXmlLogEvent(XmlReader reader, string defaultLogger)
         {
+            /*
+             // for debugging the whole xml
+            StringBuilder sb = new StringBuilder();
+            while (reader.Read())
+                sb.AppendLine(reader.ReadOuterXml());
+            var x= sb.ToString();
+            */
+
             var logMsg = new LogMessage();
 
-//TODO: edit
+            //TODO: edit
             while (!reader.EOF && (reader.NodeType != XmlNodeType.Element || reader.Name != "log4j:event"))
                 reader.Read();
             if (reader.MoveToContent() != XmlNodeType.Element || reader.Name != "log4j:event")
@@ -223,7 +231,11 @@ namespace Log2Console.Receiver
                             break;
 
                         case "log4j:throwable":
-                            logMsg.Message += Environment.NewLine + reader.ReadString();
+                            logMsg.ExceptionString = reader.ReadString();
+                            //logMsg.Message += Environment.NewLine + reader.ReadString();
+                            break;
+
+                        case "log4j:ndc":
                             break;
 
                         case "log4j:locationInfo":
@@ -237,7 +249,9 @@ namespace Log2Console.Receiver
                             if (ulong.TryParse(reader.ReadString(), out var sequenceNumber))
                                 logMsg.SequenceNr = sequenceNumber;
                             break;
+
                         case "nlog:locationInfo":
+                            logMsg.SourceAssembly = reader.GetAttribute("assembly");
                             break;
 
                         case "log4j:properties":
@@ -247,7 +261,7 @@ namespace Log2Console.Receiver
                             {
                                 var name = reader.GetAttribute("name");
                                 var value = reader.GetAttribute("value");
-                                if (name != null && name.ToLower().Equals("exceptions"))
+                                if (name != null && name.ToLower().Equals("exceptions") && String.IsNullOrWhiteSpace(logMsg.ExceptionString))
                                     logMsg.ExceptionString = value;
                                 else
                                     logMsg.Properties[name ?? throw new InvalidOperationException()] = value;

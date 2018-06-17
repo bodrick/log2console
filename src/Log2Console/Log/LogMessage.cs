@@ -73,6 +73,9 @@ namespace Log2Console.Log
         /// </summary>
         public DateTime TimeStamp;
 
+        //TODO:
+        public string SourceAssembly;
+
         /// <summary>
         ///     The log as it was read.
         /// </summary>
