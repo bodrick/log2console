@@ -1,43 +1,42 @@
-﻿using System.Text;
-using Log2Console.Settings;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using Log2Console.Settings;
 
 namespace Log2Console.Log
 {
     /// <summary>
-    /// Describes a Log Message.
-    /// TODO: Make it disposable to dereference Item?
+    ///     Describes a Log Message.
+    ///     TODO: Make it disposable to dereference Item?
     /// </summary>
     public class LogMessageItem
     {
         /// <summary>
-        /// Logger Item Parent.
+        ///     Indicates if this Log Message Item is enable.
+        ///     When disabled the List View Item is not in the Log List View.
         /// </summary>
-        public LoggerItem Parent;
+        public bool Enabled = true;
 
         /// <summary>
-        /// The item before this one, allow to retrieve the order of arrival (time is not reliable here).
-        /// The previous item is not necessary a sibling in the logger tree, only in the message list view.
-        /// </summary>
-        public LogMessageItem Previous;
-
-        /// <summary>
-        /// The associated List View Item.
+        ///     The associated List View Item.
         /// </summary>
         public ListViewItem Item;
 
         /// <summary>
-        /// Log Message.
+        ///     Log Message.
         /// </summary>
         public LogMessage Message;
 
         /// <summary>
-        /// Indicates if this Log Message Item is enable.
-        /// When disabled the List View Item is not in the Log List View.
+        ///     Logger Item Parent.
         /// </summary>
-        public bool Enabled = true;
+        public LoggerItem Parent;
+
+        /// <summary>
+        ///     The item before this one, allow to retrieve the order of arrival (time is not reliable here).
+        ///     The previous item is not necessary a sibling in the logger tree, only in the message list view.
+        /// </summary>
+        public LogMessageItem Previous;
 
 
         public LogMessageItem(LoggerItem parent, LogMessage logMsg)
@@ -47,10 +46,10 @@ namespace Log2Console.Log
 
             // Create List View Item
             var items = new ListViewItem.ListViewSubItem[UserSettings.Instance.ColumnConfiguration.Length];
-            string toolTip = string.Empty;
+            var toolTip = string.Empty;
 
             //Add all the Standard Fields to the ListViewItem
-            for (int i = 0; i < UserSettings.Instance.ColumnConfiguration.Length; i++)
+            for (var i = 0; i < UserSettings.Instance.ColumnConfiguration.Length; i++)
             {
                 items[i] = new ListViewItem.ListViewSubItem();
 
@@ -69,7 +68,7 @@ namespace Log2Console.Log
                         items[i].Text = logMsg.Level.Name;
                         break;
                     case LogMessageField.Message:
-                        string msg = logMsg.Message.Replace("\r\n", " ");
+                        var msg = logMsg.Message.Replace("\r\n", " ");
                         msg = msg.Replace("\n", " ");
                         items[i].Text = msg;
                         toolTip = msg;
@@ -81,7 +80,7 @@ namespace Log2Console.Log
                         items[i].Text = logMsg.TimeStamp.ToString(UserSettings.Instance.TimeStampFormatString);
                         break;
                     case LogMessageField.Exception:
-                        string exception = logMsg.ExceptionString.Replace("\r\n", " ");
+                        var exception = logMsg.ExceptionString.Replace("\r\n", " ");
                         exception = exception.Replace("\n", " ");
                         items[i].Text = exception;
                         break;
@@ -105,18 +104,15 @@ namespace Log2Console.Log
             //Add all the Properties in the Message to the ListViewItem
             foreach (var property in logMsg.Properties)
             {
-                string propertyKey = property.Key;
+                var propertyKey = property.Key;
                 if (UserSettings.Instance.ColumnProperties.ContainsKey(propertyKey))
                 {
-                    int propertyColumnNumber = UserSettings.Instance.ColumnProperties[propertyKey];
-                    if (propertyColumnNumber < items.Length)
-                    {
-                        items[propertyColumnNumber].Text = property.Value;
-                    }
+                    var propertyColumnNumber = UserSettings.Instance.ColumnProperties[propertyKey];
+                    if (propertyColumnNumber < items.Length) items[propertyColumnNumber].Text = property.Value;
                 }
             }
 
-            Item = new ListViewItem(items, 0) { ToolTipText = toolTip, ForeColor = logMsg.Level.Color, Tag = this };
+            Item = new ListViewItem(items, 0) {ToolTipText = toolTip, ForeColor = logMsg.Level.Color, Tag = this};
         }
 
         internal void Highlight(bool state)
@@ -126,7 +122,7 @@ namespace Log2Console.Log
 
         internal bool IsLevelInRange()
         {
-            return (Message.Level.RangeMax >= UserSettings.Instance.LogLevelInfo.RangeMax);
+            return Message.Level.RangeMax >= UserSettings.Instance.LogLevelInfo.RangeMax;
         }
 
         internal void HighlightSearchedText(bool hasText, string str)
@@ -139,13 +135,12 @@ namespace Log2Console.Log
 
         internal bool HasSearchedText(string str)
         {
-            return (Message.Message.IndexOf(str, StringComparison.InvariantCultureIgnoreCase) >= 0);
+            return Message.Message.IndexOf(str, StringComparison.InvariantCultureIgnoreCase) >= 0;
         }
 
         internal string GetMessageDetails()
         {
             return Message.GetMessageDetails();
         }
-
     }
 }

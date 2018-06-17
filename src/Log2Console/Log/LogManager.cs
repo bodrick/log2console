@@ -2,14 +2,11 @@
 using System.Collections.Generic;
 using System.Windows.Forms;
 
-
 namespace Log2Console.Log
 {
     public class LogManager : ILogManager
     {
         private static LogManager _instance;
-
-        private LoggerItem _rootLoggerItem;
         private Dictionary<string, LoggerItem> _fullPathLoggers;
 
 
@@ -17,26 +14,14 @@ namespace Log2Console.Log
         {
         }
 
-        internal static ILogManager Instance
-        {
-            get
-            {
-                if (_instance == null)
-                    _instance = new LogManager();
-                return _instance;
-            }
-        }
+        internal static ILogManager Instance => _instance ?? (_instance = new LogManager());
 
-        internal LoggerItem RootLoggerItem
-        {
-            get { return _rootLoggerItem; }
-            set { _rootLoggerItem = value; }
-        }
+        internal LoggerItem RootLoggerItem { get; set; }
 
         public void Initialize(ILoggerView loggerView, ListView logListView)
         {
             // Root Logger
-            _rootLoggerItem = LoggerItem.CreateRootLoggerItem("Root", loggerView, logListView);
+            RootLoggerItem = LoggerItem.CreateRootLoggerItem("Root", loggerView, logListView);
 
             // Quick Access Logger Collection
             _fullPathLoggers = new Dictionary<string, LoggerItem>();
@@ -60,19 +45,16 @@ namespace Log2Console.Log
             RootLoggerItem.Enabled = false;
         }
 
+        /// <exception cref="NullReferenceException">No Logger for this Log Message.</exception>
         public void ProcessLogMessage(LogMessage logMsg)
         {
             // Check 1st in the global LoggerPath/Logger dictionary
-            LoggerItem logger;
             logMsg.CheckNull();
 
-            if (!_fullPathLoggers.TryGetValue(logMsg.LoggerName, out logger))
-            {
-                // Not found, create one
+            if (!_fullPathLoggers.TryGetValue(logMsg.LoggerName, out var logger))
                 logger = RootLoggerItem.GetOrCreateLogger(logMsg.LoggerName);
-            }
             if (logger == null)
-                throw new Exception("No Logger for this Log Message.");
+                throw new NullReferenceException("No Logger for this Log Message.");
 
             logger.AddLogMessage(logMsg);
         }
@@ -80,16 +62,13 @@ namespace Log2Console.Log
 
         public void SearchText(string str)
         {
-            _rootLoggerItem.SearchText(str);
+            RootLoggerItem.SearchText(str);
         }
 
 
         public void UpdateLogLevel()
         {
-            if (RootLoggerItem == null)
-                return;
-
-            RootLoggerItem.UpdateLogLevel();
+            RootLoggerItem?.UpdateLogLevel();
         }
 
         public void SetRootLoggerName(string name)

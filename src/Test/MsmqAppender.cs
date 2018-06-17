@@ -1,4 +1,3 @@
-#region Copyright & License
 //
 // Copyright 2001-2005 The Apache Software Foundation
 //
@@ -14,90 +13,69 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-#endregion
 
-using System;
+using System.IO;
 using System.Messaging;
-
+using System.Text;
+using log4net.Appender;
 using log4net.Core;
+using log4net.Layout;
 
-namespace SampleAppendersApp.Appender
+namespace Test
 {
-	/// <summary>
-	/// Appender writes to a Microsoft Message Queue
-	/// </summary>
-	/// <remarks>
-	/// This appender sends log events via a specified MSMQ queue.
-	/// The queue specified in the QueueName (e.g. .\Private$\log-test) must already exist on
-	/// the source machine.
-	/// The message label and body are rendered using separate layouts.
-	/// </remarks>
-	public class MsmqAppender : log4net.Appender.AppenderSkeleton
-	{
-		private MessageQueue m_queue;
-		private string m_queueName;
-		private log4net.Layout.PatternLayout m_labelLayout;
+    /// <summary>
+    ///     Appender writes to a Microsoft Message Queue
+    /// </summary>
+    /// <remarks>
+    ///     This appender sends log events via a specified MSMQ queue.
+    ///     The queue specified in the QueueName (e.g. .\Private$\log-test) must already exist on
+    ///     the source machine.
+    ///     The message label and body are rendered using separate layouts.
+    /// </remarks>
+    public class MsmqAppender : AppenderSkeleton
+    {
+        private MessageQueue m_queue;
 
-		public MsmqAppender()
-		{
-		}
+        public string QueueName { get; set; }
 
-		public string QueueName
-		{
-			get { return m_queueName; }
-			set { m_queueName = value; }
-		}
+        public PatternLayout LabelLayout { get; set; }
 
-		public log4net.Layout.PatternLayout LabelLayout
-		{
-			get { return m_labelLayout; }
-			set { m_labelLayout = value; }
-		}
+        protected override void Append(LoggingEvent loggingEvent)
+        {
+            if (m_queue == null)
+            {
+                if (MessageQueue.Exists(QueueName))
+                    m_queue = new MessageQueue(QueueName);
+                else
+                    ErrorHandler.Error("Queue [" + QueueName + "] not found");
+            }
 
-		override protected void Append(LoggingEvent loggingEvent) 
-		{
-			if (m_queue == null)
-			{
-				if (MessageQueue.Exists(m_queueName))
-				{
-					m_queue = new MessageQueue(m_queueName);
-				}
-				else
-				{
-					ErrorHandler.Error("Queue ["+m_queueName+"] not found");
-				}
-			}
+            if (m_queue != null)
+            {
+                var message = new Message {Label = RenderLabel(loggingEvent)};
 
-			if (m_queue != null)
-			{
-				Message message = new Message();
 
-				message.Label = RenderLabel(loggingEvent);
+                using (var stream = new MemoryStream())
+                {
+                    var writer = new StreamWriter(stream, new UTF8Encoding(false, true));
+                    RenderLoggingEvent(writer, loggingEvent);
+                    writer.Flush();
+                    stream.Position = 0;
+                    message.BodyStream = stream;
 
-				using(System.IO.MemoryStream stream = new System.IO.MemoryStream())
-				{
-					System.IO.StreamWriter writer = new System.IO.StreamWriter(stream, new System.Text.UTF8Encoding(false, true));
-					base.RenderLoggingEvent(writer, loggingEvent);
-					writer.Flush();
-					stream.Position = 0;
-					message.BodyStream = stream;
+                    m_queue.Send(message);
+                }
+            }
+        }
 
-					m_queue.Send(message);
-				}
-			}
-		}
+        private string RenderLabel(LoggingEvent loggingEvent)
+        {
+            if (LabelLayout == null) return null;
 
-		private string RenderLabel(LoggingEvent loggingEvent)
-		{
-			if (m_labelLayout == null)
-			{
-				return null;
-			}
+            var writer = new StringWriter();
+            LabelLayout.Format(writer, loggingEvent);
 
-			System.IO.StringWriter writer = new System.IO.StringWriter();
-			m_labelLayout.Format(writer, loggingEvent);
-
-			return writer.ToString();
-		}
-	}
+            return writer.ToString();
+        }
+    }
 }

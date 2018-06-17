@@ -4,48 +4,15 @@
 // MVID: 44D35A25-C349-4FB9-B272-3AC90AA136EE
 // Assembly location: C:\Users\rwahl\Desktop\Log2Console.exe
 
-using Log2Console.Log;
 using System;
 using System.ComponentModel;
+using Log2Console.Log;
 
 namespace Log2Console.Settings
 {
     [Serializable]
     public class FieldType
     {
-        /// <summary>
-        /// Gets or sets the type of field.
-        /// </summary>
-        /// <value>
-        /// The field.
-        /// </value>
-        [Category("Field Configuration")]
-        [DisplayName("Field Type")]
-        [Description("The Type of the Field")]
-        public LogMessageField Field { get; set; }
-
-        /// <summary>
-        /// If the Field is of type Property, specify the name of the Property
-        /// </summary>
-        /// <value>
-        /// The property.
-        /// </value>
-        [Category("Field Configuration")]
-        [DisplayName("Property")]
-        [Description("The Name of the Property")]
-        public string Property { get; set; }
-
-        /// <summary>
-        /// The Display / Column name of the Field
-        /// </summary>
-        /// <value>
-        /// The name of the field.
-        /// </value>
-        [Category("Field Configuration")]
-        [DisplayName("Name")]
-        [Description("The Name of the Column")]
-        public string Name { get; set; }
-
         public FieldType()
         {
         }
@@ -57,9 +24,42 @@ namespace Log2Console.Settings
             Property = property;
         }
 
+        /// <summary>
+        ///     Gets or sets the type of field.
+        /// </summary>
+        /// <value>
+        ///     The field.
+        /// </value>
+        [Category("Field Configuration")]
+        [DisplayName("Field Type")]
+        [Description("The Type of the Field")]
+        public LogMessageField Field { get; set; }
+
+        /// <summary>
+        ///     If the Field is of type Property, specify the name of the Property
+        /// </summary>
+        /// <value>
+        ///     The property.
+        /// </value>
+        [Category("Field Configuration")]
+        [DisplayName("Property")]
+        [Description("The Name of the Property")]
+        public string Property { get; set; }
+
+        /// <summary>
+        ///     The Display / Column name of the Field
+        /// </summary>
+        /// <value>
+        ///     The name of the field.
+        /// </value>
+        [Category("Field Configuration")]
+        [DisplayName("Name")]
+        [Description("The Name of the Column")]
+        public string Name { get; set; }
+
         public override string ToString()
         {
-            return String.Format("{0}, {1}",Name,Property);
+            return $"{Name}, {Property}";
         }
     }
 }

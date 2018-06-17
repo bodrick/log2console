@@ -10,31 +10,31 @@ using System.Windows.Forms;
 
 namespace Log2Console.Settings
 {
-  [Serializable]
-  public sealed class LayoutSettings
-  {
-    public Rectangle WindowPosition { get; set; }
-
-    public FormWindowState WindowState { get; set; }
-
-    public bool ShowLogDetailView { get; set; }
-
-    public Size LogDetailViewSize { get; set; }
-
-    public bool ShowLoggerTree { get; set; }
-
-    public Size LoggerTreeSize { get; set; }
-
-    public int[] LogListViewColumnsWidths { get; set; }
-
-    public void Set(Rectangle position, FormWindowState state, Control detailView, Control loggerTree)
+    [Serializable]
+    public sealed class LayoutSettings
     {
-      this.WindowPosition = position;
-      this.WindowState = state;
-      this.ShowLogDetailView = detailView.Visible;
-      this.LogDetailViewSize = detailView.Size;
-      this.ShowLoggerTree = loggerTree.Visible;
-      this.LoggerTreeSize = loggerTree.Size;
+        public Rectangle WindowPosition { get; set; }
+
+        public FormWindowState WindowState { get; set; }
+
+        public bool ShowLogDetailView { get; set; }
+
+        public Size LogDetailViewSize { get; set; }
+
+        public bool ShowLoggerTree { get; set; }
+
+        public Size LoggerTreeSize { get; set; }
+
+        public int[] LogListViewColumnsWidths { get; set; }
+
+        public void Set(Rectangle position, FormWindowState state, Control detailView, Control loggerTree)
+        {
+            WindowPosition = position;
+            WindowState = state;
+            ShowLogDetailView = detailView.Visible;
+            LogDetailViewSize = detailView.Size;
+            ShowLoggerTree = loggerTree.Visible;
+            LoggerTreeSize = loggerTree.Size;
+        }
     }
-  }
 }

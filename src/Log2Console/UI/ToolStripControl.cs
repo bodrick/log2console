@@ -1,7 +1,4 @@
-using System;
-using System.Drawing;
 using System.Windows.Forms;
-
 
 namespace Log2Console.UI
 {
@@ -12,13 +9,7 @@ namespace Log2Console.UI
         {
         }
 
-        public T CoreControl
-        {
-            get
-            {
-                return Control as T;
-            }
-        }
+        public T CoreControl => Control as T;
 
 /*
         public override Size GetPreferredSize(Size constrainingSize)

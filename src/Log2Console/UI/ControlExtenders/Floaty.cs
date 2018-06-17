@@ -7,105 +7,43 @@
 // EXPRESS OR IMPLIED. USE IT AT YOUR OWN RISK. THE AUTHOR ACCEPTS NO
 // LIABILITY FOR ANY DATA DAMAGE/LOSS THAT THIS PRODUCT MAY CAUSE.
 //-----------------------------------------------------------------------
-using System;
-using System.Collections.Generic;
-using System.Windows.Forms;
-using System.Drawing;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
 
-namespace ControlExtenders
+using System;
+using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+
+namespace Log2Console.UI.ControlExtenders
 {
     /// <summary>
-    /// this is the publicly exposed interface of the floating window (floaty)
-    /// add more methods/properties here for your own needs, so these are exposed to the client
-    /// the main goal is to keep the floaty form internal
+    ///     this class contains basically all the logic for making a control floating and dockable
+    ///     note that it is an internal class, only it's IFloaty interface is exposed to the client
     /// </summary>
-    public interface IFloaty
-    {
-        /// <summary>
-        /// show the floaty 
-        /// </summary>
-        void Show();
-
-        /// <summary>
-        /// hide the floaty
-        /// </summary>
-        void Hide();
-
-        /// <summary>
-        /// set a caption for the floaty
-        /// </summary>
-        String Text {get; set; }
-
-        /// <summary>
-        /// indicates if a floaty may dock only on the host docking control (e.g. the form)
-        /// and not inside other floaties
-        /// </summary>
-        bool DockOnHostOnly { get; set; }
-
-        /// <summary>
-        /// indicates if a floaty may dock on the inside or on the outside of a form/control
-        /// default is true
-        /// </summary>
-        bool DockOnInside { get; set; }
-
-        /// <summary>
-        /// indicates that the handle of a floaty will not be hidden
-        /// default is false
-        /// </summary>
-        bool DontHideHandle { get; set; }
-
-
-        event EventHandler Docking;
-    }
-
-    /// <summary>
-    /// this class contains basically all the logic for making a control floating and dockable
-    /// note that it is an internal class, only it's IFloaty interface is exposed to the client
-    /// </summary>
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     internal sealed class Floaty : Form, IFloaty
     {
-        #region a teeny weeny tiny bit of API functions used
         private const int WM_NCLBUTTONDBLCLK = 0x00A3;
         private const int WM_LBUTTONUP = 0x0202;
         private const int WM_SYSCOMMAND = 0x0112;
         private const int SC_MOVE = 0xF010;
 
-        // NOTE: I don't like using API's in .Net... so I try to avoid them if possible.
-        // this time there was no way around it.
-
-        // this function is used to be able to send some very specific (uncommon) messages
-        // to the floaty forms. It is used particularly to switch between start dragging a docked panel
-        // to dragging a floaty form.
-        [DllImport("User32.dll", EntryPoint = "SendMessage")]
-        private static extern int SendMessage(int hWnd, int Msg, int wParam, int lParam);
-        #endregion private members
-
-        #region private members
+        // this is the dockmananger that manages this floaty.
+        private readonly DockExtender _dockExtender;
 
         // this is the orgigional state of the panel. This state is used to reset a control to its
         // origional state if it was floating
         private DockState _dockState;
 
+        // indicates if the container is floating or docked
+        private bool _isFloating;
+
         // this is a flag that indicates if a control can start floating
         private bool _startFloating;
 
-        // indicates if the container is floating or docked
-        private bool _isFloating; 
-
-        // this is the dockmananger that manages this floaty.
-        private DockExtender _dockExtender;
-
-        private bool _dockOnHostOnly;
-        private bool _dockOnInside;
-        private bool _dontHideHandle;
-
-        #endregion private members
-
-        #region initialization
         /// <summary>
-        /// constructor
+        ///     constructor
         /// </summary>
         /// <param name="DockExtender">requires the DockExtender</param>
         public Floaty(DockExtender DockExtender)
@@ -114,111 +52,15 @@ namespace ControlExtenders
             InitializeComponent();
         }
 
-        private void InitializeComponent()
-        {
-            SuspendLayout();
-            // 
-            // Floaty
-            // 
-            ClientSize = new Size(178, 122);
-            FormBorderStyle = FormBorderStyle.SizableToolWindow;
-            MaximizeBox = false;
-            Name = "Floaty";
-            ShowIcon = false;
-            ShowInTaskbar = false;
-            StartPosition = FormStartPosition.Manual;
-            ResumeLayout(false);
-            _dockOnInside = true;
-            _dockOnHostOnly = true; // keep it simple for now
-            _dontHideHandle = false;
-        }
+        internal DockState DockState => _dockState;
+        public event EventHandler Docking;
 
-        #endregion initialization
+        public bool DockOnHostOnly { get; set; }
 
-        #region properties
-        internal DockState DockState 
-        {
-            get { return _dockState; }
-        }
+        public bool DockOnInside { get; set; }
 
-        public bool DockOnHostOnly
-        {
-            get { return _dockOnHostOnly; }
-            set { _dockOnHostOnly = value; }
-        }
+        public bool DontHideHandle { get; set; }
 
-        public bool DockOnInside
-        {
-            get { return _dockOnInside; }
-            set { _dockOnInside = value; }
-        }
-
-        public bool DontHideHandle
-        {
-            get { return _dontHideHandle; }
-            set { _dontHideHandle = value; }
-        }
-        
-        #endregion properties
-
-        #region overrides
-        protected override void WndProc(ref Message m)
-        {
-            if (m.Msg == WM_NCLBUTTONDBLCLK) // doubleclicked on border, so reset.
-            {
-                DockFloaty();
-            }
-            base.WndProc(ref m);
-        }
-
-
-        protected override void OnResizeEnd(EventArgs e)
-        {
-            
-            if (_dockExtender.Overlay.Visible == true && _dockExtender.Overlay.DockHostControl != null) //ok found new docking position
-            {
-                _dockState.OrgDockingParent = _dockExtender.Overlay.DockHostControl;
-                _dockState.OrgBounds = _dockState.Container.RectangleToClient(_dockExtender.Overlay.Bounds);
-                _dockState.OrgDockStyle = _dockExtender.Overlay.Dock;
-                _dockExtender.Overlay.Hide();
-                DockFloaty(); // dock the container
-            }
-            _dockExtender.Overlay.DockHostControl = null;
-            _dockExtender.Overlay.Hide();
-            base.OnResizeEnd(e);
-        }
-
-        protected override void OnMove(EventArgs e)
-        {
-            if (IsDisposed) return;
-
-            Point pt = Cursor.Position;
-            Point pc = PointToClient(pt);
-            if (pc.Y < -21 || pc.Y > 0) return;
-            if (pc.X < -1 || pc.X > Width) return;
-
-            Control t = _dockExtender.FindDockHost(this, pt);
-            if (t == null) 
-            {
-                _dockExtender.Overlay.Hide();
-            }
-            else
-            {
-                SetOverlay(t, pt);
-            }
-            base.OnMove(e);
-        }
-
-        protected override void OnClosing(CancelEventArgs e)
-        {
-            e.Cancel = true;
-            Hide(); // hide but don't close
-            base.OnClosing(e);
-        }
-
-        #endregion overrides
-
-        #region public methods (implements IFloaty)
         // override base method, this control only allows one way of showing.
         public new void Show()
         {
@@ -236,34 +78,108 @@ namespace ControlExtenders
             _dockState.Container.Hide();
         }
 
+        // NOTE: I don't like using API's in .Net... so I try to avoid them if possible.
+        // this time there was no way around it.
+
+        // this function is used to be able to send some very specific (uncommon) messages
+        // to the floaty forms. It is used particularly to switch between start dragging a docked panel
+        // to dragging a floaty form.
+        [DllImport("User32.dll", EntryPoint = "SendMessage")]
+        private static extern int SendMessage(int hWnd, int Msg, int wParam, int lParam);
+
+        private void InitializeComponent()
+        {
+            SuspendLayout();
+            // 
+            // Floaty
+            // 
+            ClientSize = new Size(178, 122);
+            FormBorderStyle = FormBorderStyle.SizableToolWindow;
+            MaximizeBox = false;
+            Name = "Floaty";
+            ShowIcon = false;
+            ShowInTaskbar = false;
+            StartPosition = FormStartPosition.Manual;
+            ResumeLayout(false);
+            DockOnInside = true;
+            DockOnHostOnly = true; // keep it simple for now
+            DontHideHandle = false;
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == WM_NCLBUTTONDBLCLK) // doubleclicked on border, so reset.
+                DockFloaty();
+            base.WndProc(ref m);
+        }
+
+
+        protected override void OnResizeEnd(EventArgs e)
+        {
+            if (_dockExtender.Overlay.Visible && _dockExtender.Overlay.DockHostControl != null
+            ) //ok found new docking position
+            {
+                _dockState.OrgDockingParent = _dockExtender.Overlay.DockHostControl;
+                _dockState.OrgBounds = _dockState.Container.RectangleToClient(_dockExtender.Overlay.Bounds);
+                _dockState.OrgDockStyle = _dockExtender.Overlay.Dock;
+                _dockExtender.Overlay.Hide();
+                DockFloaty(); // dock the container
+            }
+
+            _dockExtender.Overlay.DockHostControl = null;
+            _dockExtender.Overlay.Hide();
+            base.OnResizeEnd(e);
+        }
+
+        protected override void OnMove(EventArgs e)
+        {
+            if (IsDisposed) return;
+
+            var pt = Cursor.Position;
+            var pc = PointToClient(pt);
+            if (pc.Y < -21 || pc.Y > 0) return;
+            if (pc.X < -1 || pc.X > Width) return;
+
+            var t = _dockExtender.FindDockHost(this, pt);
+            if (t == null)
+                _dockExtender.Overlay.Hide();
+            else
+                SetOverlay(t, pt);
+            base.OnMove(e);
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            e.Cancel = true;
+            Hide(); // hide but don't close
+            base.OnClosing(e);
+        }
+
         // this this member
         public new void Show(IWin32Window win)
         {
             Show();
         }
-        #endregion
-
-        #region helper functions - this contains most of the logic
 
         /// <summary>
-        /// determines the client area of the control. The area of docked controls are excluded
+        ///     determines the client area of the control. The area of docked controls are excluded
         /// </summary>
         /// <param name="c">the control to which to determine the client area</param>
         /// <returns>returns the docking area in screen coordinates</returns>
         private Rectangle GetDockingArea(Control c)
         {
-            Rectangle r = c.Bounds;
-           
+            var r = c.Bounds;
+
             if (c.Parent != null)
                 r = c.Parent.RectangleToScreen(r);
 
-            Rectangle rc = c.ClientRectangle;
+            var rc = c.ClientRectangle;
 
-            int borderwidth = (r.Width - rc.Width) / 2;
+            var borderwidth = (r.Width - rc.Width) / 2;
             r.X += borderwidth;
-            r.Y += (r.Height - rc.Height) - borderwidth;
+            r.Y += r.Height - rc.Height - borderwidth;
 
-            if (!_dockOnInside)
+            if (!DockOnInside)
             {
                 rc.X += r.X;
                 rc.Y += r.Y;
@@ -280,19 +196,18 @@ namespace ControlExtenders
                         rc.Width -= cs.Width;
                         break;
                     case DockStyle.Right:
-                            rc.Width -= cs.Width;
+                        rc.Width -= cs.Width;
                         break;
                     case DockStyle.Top:
                         rc.Y += cs.Height;
                         rc.Height -= cs.Height;
                         break;
                     case DockStyle.Bottom:
-                            rc.Height -= cs.Height;
-                        break;
-                    default:
+                        rc.Height -= cs.Height;
                         break;
                 }
             }
+
             rc.X += r.X;
             rc.Y += r.Y;
 
@@ -302,20 +217,19 @@ namespace ControlExtenders
         }
 
         /// <summary>
-        /// This method will check if the overlay needs to be displayed or not
-        /// for display it will position the overlay
+        ///     This method will check if the overlay needs to be displayed or not
+        ///     for display it will position the overlay
         /// </summary>
-        /// <param name="c"></param>
-        /// <param name="p">position of cursor in screen coordinates</param>
+        /// <param name="c">The c.</param>
+        /// <param name="pc">position of cursor in screen coordinates</param>
         private void SetOverlay(Control c, Point pc)
         {
-
-            Rectangle r = GetDockingArea(c);
-            Rectangle rc = r;
+            var r = GetDockingArea(c);
+            var rc = r;
 
             //determine relative coordinates
-            float rx = (pc.X - r.Left) / (float)(r.Width);
-            float ry = (pc.Y - r.Top) / (float)(r.Height);
+            var rx = (pc.X - r.Left) / (float) r.Width;
+            var ry = (pc.Y - r.Top) / (float) r.Height;
 
             //Console.WriteLine("Moving over " + c.Name + " " +  rx.ToString() + "," + ry.ToString());
 
@@ -366,6 +280,7 @@ namespace ControlExtenders
                 r.Y = rc.Y + rc.Height - r.Height;
                 _dockExtender.Overlay.Dock = DockStyle.Bottom;
             }
+
             if (_dockExtender.Overlay.Dock != DockStyle.None)
                 _dockExtender.Overlay.Bounds = r;
             else
@@ -384,32 +299,32 @@ namespace ControlExtenders
             // track the handle's mouse movements
             _dockState = dockState;
             Text = _dockState.Handle.Text;
-            _dockState.Handle.MouseMove += new MouseEventHandler(Handle_MouseMove);
-            _dockState.Handle.MouseHover += new EventHandler(Handle_MouseHover);
-            _dockState.Handle.MouseLeave += new EventHandler(Handle_MouseLeave);
+            _dockState.Handle.MouseMove += Handle_MouseMove;
+            _dockState.Handle.MouseHover += Handle_MouseHover;
+            _dockState.Handle.MouseLeave += Handle_MouseLeave;
         }
 
         /// <summary>
-        /// makes the docked control floatable in this Floaty form
+        ///     makes the docked control floatable in this Floaty form
         /// </summary>
         /// <param name="dockState"></param>
         /// <param name="offsetx"></param>
         /// <param name="offsety"></param>
         private void MakeFloatable(DockState dockState, int offsetx, int offsety)
         {
-            Point ps = Cursor.Position;
+            var ps = Cursor.Position;
             _dockState = dockState;
             Text = _dockState.Handle.Text;
 
-            Size sz = _dockState.Container.Size;
+            var sz = _dockState.Container.Size;
             if (_dockState.Container.Equals(_dockState.Handle))
             {
                 sz.Width += 18;
                 sz.Height += 28;
             }
+
             if (sz.Width > 600) sz.Width = 600;
             if (sz.Height > 600) sz.Height = 600;
-
 
 
             _dockState.OrgDockingParent = _dockState.Container.Parent;
@@ -417,7 +332,7 @@ namespace ControlExtenders
             _dockState.OrgDockStyle = _dockState.Container.Dock;
             //_dockState.OrgDockingParent.Controls.Remove(_dockState.Container);
             //Controls.Add(_dockState.Container);
-            if (!_dontHideHandle)
+            if (!DontHideHandle)
                 _dockState.Handle.Hide();
             _dockState.Container.Parent = this;
             _dockState.Container.Dock = DockStyle.Fill;
@@ -445,12 +360,12 @@ namespace ControlExtenders
         }
 
         /// <summary>
-        /// this will dock the floaty control
+        ///     this will dock the floaty control
         /// </summary>
         private void DockFloaty()
         {
             // bring dockhost to front first to prevent flickering
-            _dockState.OrgDockHost.TopLevelControl.BringToFront();
+            _dockState.OrgDockHost.TopLevelControl?.BringToFront();
             Hide();
             _dockState.Container.Visible = false; // hide it temporarely
             _dockState.Container.Parent = _dockState.OrgDockingParent;
@@ -459,85 +374,57 @@ namespace ControlExtenders
             _dockState.Handle.Visible = true; // show handle again
             _dockState.Container.Visible = true; // it's good, show it
 
-            if (_dockOnInside)
+            if (DockOnInside)
                 _dockState.Container.BringToFront(); // set to front
 
             //show splitter
-            if (_dockState.Splitter != null && _dockState.OrgDockStyle != DockStyle.Fill && _dockState.OrgDockStyle != DockStyle.None)
+            if (_dockState.Splitter != null && _dockState.OrgDockStyle != DockStyle.Fill &&
+                _dockState.OrgDockStyle != DockStyle.None)
             {
                 _dockState.Splitter.Parent = _dockState.OrgDockingParent;
                 _dockState.Splitter.Dock = _dockState.OrgDockStyle;
                 _dockState.Splitter.Visible = true; // show splitter
 
-                if (_dockOnInside)
+                if (DockOnInside)
                     _dockState.Splitter.BringToFront();
                 else
                     _dockState.Splitter.SendToBack();
             }
 
-            if (!_dockOnInside)
+            if (!DockOnInside)
                 _dockState.Container.SendToBack(); // set to back
 
             _isFloating = false;
 
-            if (Docking != null)
-                Docking.Invoke(this, new EventArgs());
+            Docking?.Invoke(this, new EventArgs());
         }
 
         private void DetachHandle()
         {
-            _dockState.Handle.MouseMove -= new MouseEventHandler(Handle_MouseMove);
-            _dockState.Handle.MouseHover -= new EventHandler(Handle_MouseHover);
-            _dockState.Handle.MouseLeave -= new EventHandler(Handle_MouseLeave);
+            _dockState.Handle.MouseMove -= Handle_MouseMove;
+            _dockState.Handle.MouseHover -= Handle_MouseHover;
+            _dockState.Handle.MouseLeave -= Handle_MouseLeave;
             _dockState.Container = null;
             _dockState.Handle = null;
         }
 
-        #endregion helper functions
-
-        #region Container Handle tracking methods
-        void Handle_MouseHover(object sender, EventArgs e)
+        private void Handle_MouseHover(object sender, EventArgs e)
         {
             _startFloating = true;
         }
 
-        void Handle_MouseLeave(object sender, EventArgs e)
+        private void Handle_MouseLeave(object sender, EventArgs e)
         {
             _startFloating = false;
         }
 
-        void Handle_MouseMove(object sender, MouseEventArgs e)
+        private void Handle_MouseMove(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left && _startFloating)
             {
-                Point ps = _dockState.Handle.PointToScreen(new Point(e.X, e.Y));
+                var ps = _dockState.Handle.PointToScreen(new Point(e.X, e.Y));
                 MakeFloatable(_dockState, e.X, e.Y);
             }
         }
-        #endregion Container Handle tracking methods
-
-
-        #region events
-
-        public event EventHandler Docking = null;
-
-        #endregion
     }
-
-    /// <summary>
-    /// define a Floaty collection used for enumerating all defined floaties
-    /// </summary>
-    public class Floaties : List<IFloaty>
-    {
-        public IFloaty Find(Control container)
-        {
-            foreach (Floaty f in this)
-            {
-                if (f.DockState.Container.Equals(container))
-                    return f;
-            }
-            return null;
-        }
-    }
-
 }

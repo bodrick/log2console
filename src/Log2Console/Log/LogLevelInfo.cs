@@ -6,12 +6,12 @@ namespace Log2Console.Log
     [Serializable]
     public class LogLevelInfo
     {
+        public readonly int Value;
+        public Color Color;
         public LogLevel Level;
         public string Name;
-        public Color Color;
-        public int Value;
-        public int RangeMin;
         public int RangeMax;
+        public int RangeMin;
 
 
         public LogLevelInfo(LogLevel level, Color color)
@@ -34,8 +34,8 @@ namespace Log2Console.Log
 
         public override bool Equals(object obj)
         {
-            if (obj is LogLevelInfo)
-                return ((obj as LogLevelInfo) == this);
+            if (obj is LogLevelInfo info)
+                return info == this;
             return base.Equals(obj);
         }
 
@@ -46,17 +46,16 @@ namespace Log2Console.Log
 
         public static bool operator ==(LogLevelInfo first, LogLevelInfo second)
         {
-            if (((object)first == null) || ((object)second == null))
-                return (((object)first == null) && ((object)second == null));
-            return (first.Value == second.Value);
+            if ((object) first == null || (object) second == null)
+                return (object) first == null && (object) second == null;
+            return first.Value == second.Value;
         }
 
         public static bool operator !=(LogLevelInfo first, LogLevelInfo second)
         {
-            if (((object)first == null) || ((object)second == null))
-                return !(((object)first == null) && ((object)second == null));
+            if ((object) first == null || (object) second == null)
+                return !((object) first == null && (object) second == null);
             return first.Value != second.Value;
         }
     }
-
 }

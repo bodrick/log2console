@@ -3,77 +3,81 @@ using System.Collections.Generic;
 using System.Text;
 using Log2Console.Settings;
 
-
 namespace Log2Console.Log
 {
     public class LogMessage
     {
         /// <summary>
-        /// The Line Number of the Log Message
-        /// </summary>
-        public ulong SequenceNr;
-
-        /// <summary>
-        /// Logger Name.
-        /// </summary>
-        public string LoggerName;
-
-        /// <summary>
-        /// Root Logger Name.
-        /// </summary>
-        public string RootLoggerName;
-
-        /// <summary>
-        /// Log Level.
-        /// </summary>
-        public LogLevelInfo Level;
-
-        /// <summary>
-        /// Log Message.
-        /// </summary>
-        public string Message;
-
-        /// <summary>
-        /// Thread Name.
-        /// </summary>
-        public string ThreadName;
-
-        /// <summary>
-        /// Time Stamp.
-        /// </summary>
-        public DateTime TimeStamp;
-
-        /// <summary>
-        /// Properties collection.
-        /// </summary>
-        public Dictionary<string, string> Properties = new Dictionary<string, string>();
-
-        /// <summary>
-        /// An exception message to associate to this message.
-        /// </summary>
-        public string ExceptionString;
-
-        /// <summary>
-        /// The CallSite Class
+        ///     The CallSite Class
         /// </summary>
         public string CallSiteClass;
 
 
         /// <summary>
-        /// The CallSite Method in which the Log is made
+        ///     The CallSite Method in which the Log is made
         /// </summary>
         public string CallSiteMethod;
 
         /// <summary>
-        /// The Name of the Source File
+        ///     An exception message to associate to this message.
+        /// </summary>
+        public string ExceptionString;
+
+        /// <summary>
+        ///     Log Level.
+        /// </summary>
+        public LogLevelInfo Level;
+
+        /// <summary>
+        ///     Logger Name.
+        /// </summary>
+        public string LoggerName;
+
+        /// <summary>
+        ///     Log Message.
+        /// </summary>
+        public string Message;
+
+        /// <summary>
+        ///     Properties collection.
+        /// </summary>
+        public Dictionary<string, string> Properties = new Dictionary<string, string>();
+
+        /// <summary>
+        ///     Root Logger Name.
+        /// </summary>
+        public string RootLoggerName;
+
+        /// <summary>
+        ///     The Line Number of the Log Message
+        /// </summary>
+        public ulong SequenceNr;
+
+        /// <summary>
+        ///     The Line of the Source File
+        /// </summary>
+        public uint SourceFileLineNr;
+
+        /// <summary>
+        ///     The Name of the Source File
         /// </summary>
         public string SourceFileName;
 
         /// <summary>
-        /// The Line of the Source File
+        ///     Thread Name.
         /// </summary>
-        public uint SourceFileLineNr;
+        public string ThreadName;
 
+        /// <summary>
+        ///     Time Stamp.
+        /// </summary>
+        public DateTime TimeStamp;
+
+        /// <summary>
+        ///     The log as it was read.
+        /// </summary>
+        //TODO:
+        //public string RawLog;
         public void CheckNull()
         {
             if (string.IsNullOrEmpty(LoggerName))
@@ -95,7 +99,7 @@ namespace Log2Console.Log
             if (string.IsNullOrEmpty(SourceFileName))
                 SourceFileName = string.Empty;
             if (Level == null)
-                Level = LogLevels.Instance[(LogLevel.Error)];
+                Level = LogLevels.Instance[LogLevel.Error];
         }
 
         public override string ToString()
@@ -106,12 +110,13 @@ namespace Log2Console.Log
                 sb.Append(GetInformation(fieldType));
                 sb.Append("\t");
             }
+
             return sb.ToString();
         }
 
         private string GetInformation(FieldType fieldType)
         {
-            string result = string.Empty;
+            var result = string.Empty;
             switch (fieldType.Field)
             {
                 case LogMessageField.SequenceNr:
@@ -154,6 +159,7 @@ namespace Log2Console.Log
                     result = Properties.ToString();
                     break;
             }
+
             return result;
         }
 
@@ -169,7 +175,11 @@ namespace Log2Console.Log
                     sb.Append(@" \line ");
                 sb.Append(info + @" \line ");
             }
+
             sb.Append(@"}");
+            // Maybe this isn't a good idea, possibly on a new tab.
+            //TODO:
+            //sb.Append("\n\nRaw Log\n" + this.RawLog);
             return sb.ToString();
         }
     }
