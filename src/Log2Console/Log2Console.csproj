@@ -3,6 +3,7 @@
     <TargetFramework>net462</TargetFramework>
     <Configurations>Debug;Release</Configurations>
     <OutputType>WinExe</OutputType>
+	<ApplicationIcon>res\windowb.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <Version>1.6.0.4</Version>
