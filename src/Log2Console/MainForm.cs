@@ -45,9 +45,9 @@ namespace Log2Console
         private Timer _taskbarProgressTimer;
         private const int _taskbarProgressTimerPeriod = 2000;
         private bool _addedLogMessage;
-        private readonly ThumbnailToolbarButton _pauseWinbarBtn;
-        private readonly ThumbnailToolbarButton _autoScrollWinbarBtn;
-        private readonly ThumbnailToolbarButton _clearAllWinbarBtn;
+        private readonly ThumbnailToolBarButton _pauseWinbarBtn;
+        private readonly ThumbnailToolBarButton _autoScrollWinbarBtn;
+        private readonly ThumbnailToolBarButton _clearAllWinbarBtn;
 
         private readonly Queue<LogMessage> _eventQueue;
         private Timer _logMsgTimer;
@@ -117,21 +117,21 @@ namespace Log2Console
                     _taskbarProgressTimer = new Timer(OnTaskbarProgressTimer, null, _taskbarProgressTimerPeriod, _taskbarProgressTimerPeriod);
 
                     // Pause Btn
-                    _pauseWinbarBtn = new ThumbnailToolbarButton(Icon.FromHandle(((Bitmap)pauseBtn.Image).GetHicon()), pauseBtn.ToolTipText);
+                    _pauseWinbarBtn = new ThumbnailToolBarButton(Icon.FromHandle(((Bitmap)pauseBtn.Image).GetHicon()), pauseBtn.ToolTipText);
                     _pauseWinbarBtn.Click += pauseBtn_Click;
 
                     // Auto Scroll Btn
                     _autoScrollWinbarBtn =
-                        new ThumbnailToolbarButton(Icon.FromHandle(((Bitmap)autoLogToggleBtn.Image).GetHicon()), autoLogToggleBtn.ToolTipText);
+                        new ThumbnailToolBarButton(Icon.FromHandle(((Bitmap)autoLogToggleBtn.Image).GetHicon()), autoLogToggleBtn.ToolTipText);
                     _autoScrollWinbarBtn.Click += autoLogToggleBtn_Click;
 
                     // Clear All Btn
                     _clearAllWinbarBtn =
-                        new ThumbnailToolbarButton(Icon.FromHandle(((Bitmap)clearLoggersBtn.Image).GetHicon()), clearLoggersBtn.ToolTipText);
+                        new ThumbnailToolBarButton(Icon.FromHandle(((Bitmap)clearLoggersBtn.Image).GetHicon()), clearLoggersBtn.ToolTipText);
                     _clearAllWinbarBtn.Click += clearAll_Click;
 
                     // Add Btns
-                    TaskbarManager.Instance.ThumbnailToolbars.AddButtons(Handle, _pauseWinbarBtn, _autoScrollWinbarBtn, _clearAllWinbarBtn);
+                    TaskbarManager.Instance.ThumbnailToolBars.AddButtons(Handle, _pauseWinbarBtn, _autoScrollWinbarBtn, _clearAllWinbarBtn);
                 }
                 catch (Exception)
                 {
