@@ -76,7 +76,7 @@ namespace Log2Console.Receiver
                     "    <remotePort value=\"7071\" />" + Environment.NewLine +
                     "    <layout type=\"log4net.Layout.XmlLayoutSchemaLog4j\" />" + Environment.NewLine +
                     "</appender>" + Environment.NewLine +
-                    + Environment.NewLine +
+                    Environment.NewLine +
                     "And add appender to log4net <root>:"+ Environment.NewLine +
                     "<appender-ref ref=\"UdpAppender\" />";
             }
