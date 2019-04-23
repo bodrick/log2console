@@ -79,11 +79,9 @@
   <ItemGroup>
     <Reference Include="ICSharpCode.TextEditor, Version=3.3.7.6486, Culture=neutral, PublicKeyToken=4d61825e8dd49f1a, processorArchitecture=MSIL">
       <HintPath>..\packages\NetIde.ICSharpCode.TextEditor.3.3.7.6487\lib\net20\ICSharpCode.TextEditor.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
-      <HintPath>..\packages\log4net.2.0.8\lib\net40-full\log4net.dll</HintPath>
-      <Private>True</Private>
+      <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -171,7 +169,6 @@
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="packages.config" />
     <Compile Include="Receiver\BaseReceiver.cs" />
     <Compile Include="Receiver\DebugMonitor.cs" />
     <Compile Include="Receiver\EventLogReceiver.cs" />
@@ -216,6 +213,7 @@
   </ItemGroup>
   <ItemGroup>
     <BaseApplicationManifest Include="Properties\app.manifest" />
+    <None Include="packages.config" />
     <None Include="res\back16.png" />
     <None Include="res\cd16.png" />
     <None Include="res\close16.png" />
