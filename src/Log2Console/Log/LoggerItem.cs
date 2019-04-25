@@ -1,73 +1,173 @@
-﻿using Log2Console.Settings;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using Log2Console.Settings;
 
 namespace Log2Console.Log
 {
     /// <summary>
-    /// Describes a Logger.
+    ///     Describes a Logger.
     /// </summary>
     public class LoggerItem
     {
         private const char LoggerSeparator = '.';
 
-
         /// <summary>
-        /// Parent Logger Item. Null for the Root.
-        /// </summary>
-        public LoggerItem Parent;
-        /// <summary>
-        /// Collection of child Logger Items, identified by their full path.
-        /// </summary>
-        public Dictionary<string, LoggerItem> Loggers = new Dictionary<string, LoggerItem>();
-        /// <summary>
-        /// Collection of Log Messages for this Logger.
-        /// </summary>
-        public List<LogMessageItem> LogMessages = new List<LogMessageItem>();
-
-        /// <summary>
-        /// The associated Tree Node.
-        /// </summary>
-        public ILoggerView LoggerView;
-        /// <summary>
-        /// The optional associated List View Group.
-        /// </summary>
-        public ListViewGroup Group;
-        /// <summary>
-        /// A reference to the Log ListView associated to this Logger.
-        /// </summary>
-        private ListView _logListView;
-
-        /// <summary>
-        /// Short Name of this Logger (used as the node name).
-        /// </summary>
-        private string _name = String.Empty;
-        /// <summary>
-        /// Full Name (or "Path") of this Logger.
-        /// </summary>
-        public string FullName = String.Empty;
-        /// <summary>
-        /// When set the Logger and its Messages are displayed.
+        ///     When set the Logger and its Messages are displayed.
         /// </summary>
         private bool _enabled = true;
+
+        private bool _hasSearchedText;
 
         private bool _highlight;
         private bool _highlightLogMessages;
 
+        /// <summary>
+        ///     A reference to the Log ListView associated to this Logger.
+        /// </summary>
+        private ListView _logListView;
+
+        /// <summary>
+        ///     Short Name of this Logger (used as the node name).
+        /// </summary>
+        private string _name = string.Empty;
+
         private string _searchedText;
-        private bool _hasSearchedText;
 
+        /// <summary>
+        ///     Full Name (or "Path") of this Logger.
+        /// </summary>
+        public string FullName { get; set; } = string.Empty;
 
-        private LoggerItem()
+        /// <summary>
+        ///     The optional associated List View Group.
+        /// </summary>
+        public ListViewGroup Group { get; set; }
+
+        /// <summary>
+        ///     Collection of child Logger Items, identified by their full path.
+        /// </summary>
+        public Dictionary<string, LoggerItem> Loggers { get; set; } = new Dictionary<string, LoggerItem>();
+
+        /// <summary>
+        ///     The associated Tree Node.
+        /// </summary>
+        public ILoggerView LoggerView { get; set; }
+
+        /// <summary>
+        ///     Collection of Log Messages for this Logger.
+        /// </summary>
+        public List<LogMessageItem> LogMessages { get; set; } = new List<LogMessageItem>();
+
+        /// <summary>
+        ///     Parent Logger Item. Null for the Root.
+        /// </summary>
+        public LoggerItem Parent { get; set; }
+
+        public string Name
         {
+            get => _name;
+            set
+            {
+                _name = value;
+
+                if (LoggerView != null)
+                {
+                    LoggerView.Text = _name;
+                }
+            }
+        }
+
+        internal bool Enabled
+        {
+            get => _enabled;
+            set
+            {
+                if (_enabled == value)
+                {
+                    return;
+                }
+
+                _enabled = value;
+                LoggerView.Enabled = value;
+
+                // Now enable all child loggers if the settings are set to 
+                // recursively enable/disable child loggers.
+                if (UserSettings.Instance.RecursivelyEnableLoggers)
+                {
+                    foreach (var child in Loggers.Values)
+                    {
+                        child.Enabled = value;
+                    }
+                }
+
+                if (LogMessages.Count == 0)
+                {
+                    return;
+                }
+
+                // Update List View
+                _logListView.BeginUpdate();
+
+                foreach (var item in LogMessages)
+                {
+                    EnableLogMessage(item, _enabled && IsItemToBeEnabled(item));
+                }
+
+                _logListView.EndUpdate();
+            }
+        }
+
+
+        internal bool Highlight
+        {
+            get => _highlight;
+            set
+            {
+                // Don't allow highlight for the root item
+                if (_highlight == value || Parent == null)
+                {
+                    return;
+                }
+
+                _highlight = value;
+                LoggerView.Highlight = value;
+                Parent.Highlight = value;
+            }
+        }
+
+
+        internal bool HighlightLogMessages
+        {
+            get => _highlightLogMessages;
+            set
+            {
+                // Don't allow highlight for the root item
+                if (Parent == null)
+                {
+                    return;
+                }
+
+                _highlightLogMessages = value;
+
+
+                _logListView.BeginUpdate();
+
+                foreach (var item in LogMessages)
+                {
+                    item.Highlight(value);
+                }
+
+                _logListView.EndUpdate();
+            }
         }
 
         public static LoggerItem CreateRootLoggerItem(string name, ILoggerView loggerView, ListView logListView)
         {
-            LoggerItem logger = new LoggerItem();
-            logger.Name = name;
-            logger._logListView = logListView;
+            var logger = new LoggerItem
+            {
+                Name = name, _logListView = logListView
+            };
 
             // Tree Node
             logger.LoggerView = loggerView.AddNew(name, logger);
@@ -77,15 +177,11 @@ namespace Log2Console.Log
 
         private static LoggerItem CreateLoggerItem(string name, string fullName, LoggerItem parent)
         {
-            if (parent == null)
-                throw new ArgumentNullException();
-
             // Creating the logger item.
-            LoggerItem logger = new LoggerItem();
-            logger.Name = name;
-            logger.FullName = fullName;
-            logger.Parent = parent;
-
+            var logger = new LoggerItem
+            {
+                Name = name, FullName = fullName, Parent = parent ?? throw new ArgumentNullException()
+            };
 
             logger._logListView = logger.Parent._logListView;
 
@@ -95,7 +191,7 @@ namespace Log2Console.Log
             // Creating a child logger view and saving it in the new logger.
             logger.LoggerView = parent.LoggerView.AddNew(name, logger);
 
-            if (UserSettings.Instance.RecursivlyEnableLoggers)
+            if (UserSettings.Instance.RecursivelyEnableLoggers)
             {
                 logger._enabled = parent.Enabled;
                 logger.LoggerView.Enabled = parent.LoggerView.Enabled;
@@ -109,94 +205,6 @@ namespace Log2Console.Log
             }
 
             return logger;
-        }
-
-
-
-        public string Name
-        {
-            get { return _name; }
-            set
-            {
-                _name = value;
-
-                if (LoggerView != null)
-                    LoggerView.Text = _name;
-            }
-        }
-
-        internal bool Enabled
-        {
-            get { return _enabled; }
-            set
-            {
-                if (_enabled == value)
-                    return;
-
-                _enabled = value;
-                LoggerView.Enabled = value;
-
-                // Now enable all child loggers if the settings are set to 
-                // recursivly enable/disable chid loggers.
-                if (UserSettings.Instance.RecursivlyEnableLoggers)
-                {
-                    foreach (LoggerItem child in Loggers.Values)
-                    {
-                        child.Enabled = value;
-                    }
-                }
-
-                if (LogMessages.Count == 0)
-                    return;
-
-                // Update List View
-                _logListView.BeginUpdate();
-
-                foreach (LogMessageItem item in LogMessages)
-                {
-                    EnableLogMessage(item, _enabled && IsItemToBeEnabled(item));
-                }
-
-                _logListView.EndUpdate();
-            }
-        }
-
-
-        internal bool Highlight
-        {
-            get { return _highlight; }
-            set
-            {
-                // Don't allow highlight for the root item
-                if ((_highlight == value) || (Parent == null))
-                    return;
-
-                _highlight = value;
-                LoggerView.Highlight = value;
-                Parent.Highlight = value;
-            }
-        }
-
-
-        internal bool HighlightLogMessages
-        {
-            get { return _highlightLogMessages; }
-            set
-            {
-                // Don't allow highlight for the root item
-                if (Parent == null)
-                    return;
-
-                _highlightLogMessages = value;
-
-
-                _logListView.BeginUpdate();
-
-                foreach (LogMessageItem item in LogMessages)
-                    item.Highlight(value);
-
-                _logListView.EndUpdate();
-            }
         }
 
         public void Remove()
@@ -218,8 +226,10 @@ namespace Log2Console.Log
         {
             ClearAllLogMessages();
 
-            foreach (KeyValuePair<string, LoggerItem> kvp in Loggers)
+            foreach (var kvp in Loggers)
+            {
                 kvp.Value.ClearAll();
+            }
 
             LoggerView.Clear();
             Loggers.Clear();
@@ -229,13 +239,14 @@ namespace Log2Console.Log
         {
             _logListView.BeginUpdate();
 
-            if (Group != null)
-                Group.Items.Clear();
+            Group?.Items.Clear();
             _logListView.Items.Clear();
             LogMessages.Clear();
 
-            foreach (KeyValuePair<string, LoggerItem> kvp in Loggers)
+            foreach (var kvp in Loggers)
+            {
                 kvp.Value.ClearLogMessages();
+            }
 
             _logListView.EndUpdate();
         }
@@ -244,15 +255,19 @@ namespace Log2Console.Log
         {
             _logListView.BeginUpdate();
 
-            if (Group != null)
-                Group.Items.Clear();
+            Group?.Items.Clear();
 
-            foreach (LogMessageItem item in LogMessages)
+            foreach (var item in LogMessages)
+            {
                 _logListView.Items.Remove(item.Item);
+            }
+
             LogMessages.Clear();
 
-            foreach (KeyValuePair<string, LoggerItem> kvp in Loggers)
+            foreach (var kvp in Loggers)
+            {
                 kvp.Value.ClearLogMessages();
+            }
 
             _logListView.EndUpdate();
         }
@@ -262,12 +277,12 @@ namespace Log2Console.Log
         {
             _logListView.BeginUpdate();
 
-            foreach (LogMessageItem item in LogMessages)
+            foreach (var item in LogMessages)
             {
                 EnableLogMessage(item, IsItemToBeEnabled(item));
             }
 
-            foreach (KeyValuePair<string, LoggerItem> kvp in Loggers)
+            foreach (var kvp in Loggers)
             {
                 kvp.Value.UpdateLogLevel();
             }
@@ -277,33 +292,44 @@ namespace Log2Console.Log
 
         private void EnableLogMessage(LogMessageItem item, bool enable)
         {
-            if ((item.Enabled && enable) || (!item.Enabled && !enable))
+            if (item.Enabled && enable || !item.Enabled && !enable)
+            {
                 return;
+            }
 
             if (enable)
+            {
                 EnableLogMessage(item);
+            }
             else
+            {
                 DisableLogMessage(item);
+            }
         }
 
         private void EnableLogMessage(LogMessageItem item)
         {
             if (item.Enabled)
+            {
                 return;
+            }
 
             InsertLogMessageByDate(_logListView.Items, item);
 
             if (Group != null)
+            {
                 InsertLogMessageByDate(Group.Items, item);
+            }
         }
 
         private void DisableLogMessage(LogMessageItem item)
         {
             if (!item.Enabled)
+            {
                 return;
+            }
 
-            if (Group != null)
-                Group.Items.Remove(item.Item);
+            Group?.Items.Remove(item.Item);
 
             _logListView.Items.Remove(item.Item);
 
@@ -314,13 +340,17 @@ namespace Log2Console.Log
         private void InsertLogMessageByDate(ListView.ListViewItemCollection items, LogMessageItem refItem)
         {
             // Get previous item
-            LogMessageItem prevItem = refItem;
-            while ((prevItem != null) && !prevItem.Enabled)
+            var prevItem = refItem;
+            while (prevItem != null && !prevItem.Enabled)
+            {
                 prevItem = prevItem.Previous;
+            }
 
-            int pos = 0;
-            if ((prevItem != null) && (prevItem.Item != null))
+            var pos = 0;
+            if (prevItem?.Item != null)
+            {
                 pos = items.IndexOf(prevItem.Item) + 1;
+            }
 
             items.Insert(pos, refItem.Item);
 
@@ -330,13 +360,15 @@ namespace Log2Console.Log
 
         internal LoggerItem GetOrCreateLogger(string loggerPath)
         {
-            if (String.IsNullOrEmpty(loggerPath))
+            if (string.IsNullOrEmpty(loggerPath))
+            {
                 return null;
+            }
 
             // Extract Logger Name
-            string currentLoggerName = loggerPath;
-            string remainingLoggerPath = String.Empty;
-            int pos = loggerPath.IndexOf(LoggerSeparator);
+            var currentLoggerName = loggerPath;
+            var remainingLoggerPath = string.Empty;
+            var pos = loggerPath.IndexOf(LoggerSeparator);
             if (pos > 0)
             {
                 currentLoggerName = loggerPath.Substring(0, pos);
@@ -344,26 +376,29 @@ namespace Log2Console.Log
             }
 
             // Check if the Logger is in the Child Collection
-            LoggerItem logger;
-            if (!Loggers.TryGetValue(currentLoggerName, out logger))
+            if (!Loggers.TryGetValue(currentLoggerName, out var logger))
             {
                 // Not found here, needs to be created
-                string childLoggerPath =
-                    (String.IsNullOrEmpty(FullName) ? "" : FullName + LoggerSeparator) + currentLoggerName;
+                var childLoggerPath =
+                    (string.IsNullOrEmpty(FullName) ? "" : FullName + LoggerSeparator) + currentLoggerName;
                 logger = CreateLoggerItem(currentLoggerName, childLoggerPath, this);
             }
 
             // Continue?
-            if (!String.IsNullOrEmpty(remainingLoggerPath))
+            if (!string.IsNullOrEmpty(remainingLoggerPath))
+            {
                 logger = logger.GetOrCreateLogger(remainingLoggerPath);
+            }
 
             return logger;
         }
 
         internal LogMessageItem AddLogMessage(LogMessage logMsg)
         {
-            LogMessageItem item = new LogMessageItem(this, logMsg);
-            item.Enabled = Enabled;
+            var item = new LogMessageItem(this, logMsg)
+            {
+                Enabled = Enabled
+            };
             LogMessages.Add(item);
 
 
@@ -372,16 +407,20 @@ namespace Log2Console.Log
 
             // Limit the number of displayed messages if necessary
             if (UserSettings.Instance.MessageCycleCount > 0)
+            {
                 RemoveExtraLogMessages(UserSettings.Instance.MessageCycleCount);
+            }
 
-            int index = 0;
+            var index = 0;
             if (_logListView.Items.Count > 0)
             {
                 for (index = _logListView.Items.Count; index > 0; --index)
                 {
                     item.Previous = _logListView.Items[index - 1].Tag as LogMessageItem;
-                    if (item.Previous.Message.TimeStamp.Ticks <= item.Message.TimeStamp.Ticks)
+                    if (item.Previous != null && item.Previous.Message.TimeStamp.Ticks <= item.Message.TimeStamp.Ticks)
+                    {
                         break;
+                    }
                 }
             }
 
@@ -392,17 +431,23 @@ namespace Log2Console.Log
                 _logListView.Items.Insert(index, item.Item);
 
                 // Add to the corresponding if necessary
-                if (UserSettings.Instance.GroupLogMessages && (Group != null))
-                    Group.Items.Add(item.Item);
+                if (UserSettings.Instance.GroupLogMessages)
+                {
+                    Group?.Items.Add(item.Item);
+                }
 
                 // Force the item to be visible if necessary
                 if (UserSettings.Instance.AutoScrollToLastLog)
+                {
                     item.Item.EnsureVisible();
+                }
             }
 
             // Hide the item is is not in range or doesn't match the current text search if any
             if (!IsItemToBeEnabled(item))
+            {
                 DisableLogMessage(item);
+            }
 
             // Done!
             _logListView.EndUpdate();
@@ -414,10 +459,10 @@ namespace Log2Console.Log
         {
             // TODO: Buggy with Grouping....!!!
 
-            int idx = 0;
+            var idx = 0;
             while (LogMessages.Count > count)
             {
-                LogMessageItem item = LogMessages[idx];
+                var item = LogMessages[idx];
 
                 if (!item.Enabled)
                 {
@@ -433,8 +478,7 @@ namespace Log2Console.Log
         {
             LogMessages.Remove(item);
 
-            if (Group != null)
-                Group.Items.Remove(item.Item);
+            Group?.Items.Remove(item.Item);
 
             _logListView.Items.Remove(item.Item);
         }
@@ -450,33 +494,28 @@ namespace Log2Console.Log
 
         private void DoSearch(string str)
         {
-            _hasSearchedText = !String.IsNullOrEmpty(str);
+            _hasSearchedText = !string.IsNullOrEmpty(str);
             _searchedText = str;
 
             // Skip all log messages if logger is disabled
             if (Enabled)
             {
-                foreach (LogMessageItem item in LogMessages)
+                foreach (var item in LogMessages)
                 {
                     EnableLogMessage(item, IsItemToBeEnabled(item));
                 }
             }
 
             // Iterate call
-            foreach (KeyValuePair<string, LoggerItem> kvp in Loggers)
+            foreach (var kvp in Loggers)
             {
                 kvp.Value.DoSearch(_searchedText);
             }
         }
 
-        internal bool IsItemToBeEnabled(LogMessageItem item)
-        {
-            return (item.IsLevelInRange() && (!_hasSearchedText || item.HasSearchedText(_searchedText)));
-        }
+        internal bool IsItemToBeEnabled(LogMessageItem item) =>
+            item.IsLevelInRange() && (!_hasSearchedText || item.HasSearchedText(_searchedText));
 
-        public override string ToString()
-        {
-            return Name;
-        }
+        public override string ToString() => Name;
     }
 }

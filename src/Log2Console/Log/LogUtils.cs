@@ -1,32 +1,20 @@
-﻿namespace Log2Console.Log
+using System.Linq;
+
+namespace Log2Console.Log
 {
-  public static class LogUtils
-  {
-    public static bool IsInRange(int val, int min, int max)
+    public static class LogUtils
     {
-      return (val >= min) && (val <= max);
+        public static LogLevelInfo GetLogLevelInfo(int level)
+        {
+            var info = LogLevels.Instance.LogLevelInfos.SingleOrDefault(f =>
+                level >= f.RangeMin && level <= f.RangeMax);
+            return info ?? LogLevels.Instance.InvalidLogLevel;
+        }
+
+        public static LogLevelInfo GetLogLevelInfo(LogLevel level)
+        {
+            var info = LogLevels.Instance.LogLevelInfos.SingleOrDefault(f => f.Level == level);
+            return info ?? LogLevels.Instance.InvalidLogLevel;
+        }
     }
-
-    public static LogLevelInfo GetLogLevelInfo(int level)
-    {
-      foreach (LogLevelInfo info in LogLevels.Instance.LogLevelInfos)
-      {
-        if (IsInRange(level, info.RangeMin, info.RangeMax))
-          return info;
-      }
-
-      return LogLevels.Instance.InvalidLogLevel;
-    }
-
-    public static LogLevelInfo GetLogLevelInfo(LogLevel level)
-    {
-      foreach (LogLevelInfo info in LogLevels.Instance.LogLevelInfos)
-      {
-        if (level == info.Level)
-          return info;
-      }
-
-      return LogLevels.Instance.InvalidLogLevel;
-    }
-  }
 }

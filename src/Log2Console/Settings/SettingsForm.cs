@@ -1,27 +1,15 @@
 using System.Windows.Forms;
 
-
 namespace Log2Console.Settings
 {
-  public partial class SettingsForm : Form
-  {
-    public SettingsForm(UserSettings userSettings)
+    public partial class SettingsForm : Form
     {
-      InitializeComponent();
+        public SettingsForm()
+        {
+            InitializeComponent();
 
-      Font = UserSettings.Instance.DefaultFont ?? Font;
-
-      // UI Settings
-      UserSettings = userSettings;
+            // UI Settings
+            settingsPropertyGrid.SelectedObject = UserSettings.Instance;
+        }
     }
-
-    public UserSettings UserSettings
-    {
-      get { return settingsPropertyGrid.SelectedObject as UserSettings; }
-      set
-      {
-        settingsPropertyGrid.SelectedObject = value;
-      }
-    }
-  }
 }

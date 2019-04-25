@@ -1,4 +1,5 @@
 using System.Windows.Forms;
+using Log2Console.UI;
 
 namespace Log2Console
 {
@@ -103,7 +104,7 @@ namespace Log2Console
             this.toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
             this.copyLogDetailBtn = new System.Windows.Forms.ToolStripButton();
             this.tabExceptions = new System.Windows.Forms.TabPage();
-            this.tbExceptions = new RichTextBoxLinks.RichTextBoxEx();
+            this.tbExceptions = new RichTextBoxEx();
             this.tabSource = new System.Windows.Forms.TabPage();
             this.panel1 = new System.Windows.Forms.Panel();
             this.textEditorSourceCode = new ICSharpCode.TextEditor.TextEditorControl();
@@ -193,7 +194,7 @@ namespace Log2Console
             this.quitBtn.Name = "quitBtn";
             this.quitBtn.Size = new System.Drawing.Size(49, 22);
             this.quitBtn.Text = "Quit";
-            this.quitBtn.Click += new System.EventHandler(this.quitBtn_Click);
+            this.quitBtn.Click += new System.EventHandler(this.QuitBtn_Click);
             // 
             // toolStripLabel3
             // 
@@ -217,7 +218,7 @@ namespace Log2Console
             this.levelComboBox.Name = "levelComboBox";
             this.levelComboBox.Size = new System.Drawing.Size(75, 24);
             this.levelComboBox.ToolTipText = "Log Level Filter";
-            this.levelComboBox.SelectedIndexChanged += new System.EventHandler(this.levelComboBox_SelectedIndexChanged);
+            this.levelComboBox.SelectedIndexChanged += new System.EventHandler(this.LevelComboBox_SelectedIndexChanged);
             // 
             // toolStripSeparator8
             // 
@@ -232,7 +233,7 @@ namespace Log2Console
             this.pauseBtn.Name = "pauseBtn";
             this.pauseBtn.Size = new System.Drawing.Size(23, 22);
             this.pauseBtn.ToolTipText = "Enable/Disable All Logs";
-            this.pauseBtn.Click += new System.EventHandler(this.pauseBtn_Click);
+            this.pauseBtn.Click += new System.EventHandler(this.PauseBtn_Click);
             // 
             // toolStripSeparator15
             // 
@@ -247,7 +248,7 @@ namespace Log2Console
             this.goToFirstLogBtn.Name = "goToFirstLogBtn";
             this.goToFirstLogBtn.Size = new System.Drawing.Size(23, 22);
             this.goToFirstLogBtn.ToolTipText = "Go to First Log Message";
-            this.goToFirstLogBtn.Click += new System.EventHandler(this.goToFirstLogBtn_Click);
+            this.goToFirstLogBtn.Click += new System.EventHandler(this.GoToFirstLogBtn_Click);
             // 
             // autoLogToggleBtn
             // 
@@ -257,7 +258,7 @@ namespace Log2Console
             this.autoLogToggleBtn.Name = "autoLogToggleBtn";
             this.autoLogToggleBtn.Size = new System.Drawing.Size(23, 22);
             this.autoLogToggleBtn.ToolTipText = "Toggle Auto Log to Last Log Message";
-            this.autoLogToggleBtn.Click += new System.EventHandler(this.autoLogToggleBtn_Click);
+            this.autoLogToggleBtn.Click += new System.EventHandler(this.AutoLogToggleBtn_Click);
             // 
             // goToLastLogBtn
             // 
@@ -267,7 +268,7 @@ namespace Log2Console
             this.goToLastLogBtn.Name = "goToLastLogBtn";
             this.goToLastLogBtn.Size = new System.Drawing.Size(23, 22);
             this.goToLastLogBtn.ToolTipText = "Go to Last Log Message";
-            this.goToLastLogBtn.Click += new System.EventHandler(this.goToLastLogBtn_Click);
+            this.goToLastLogBtn.Click += new System.EventHandler(this.GoToLastLogBtn_Click);
             // 
             // toolStripSeparator13
             // 
@@ -282,7 +283,7 @@ namespace Log2Console
             this.zoomOutLogListBtn.Name = "zoomOutLogListBtn";
             this.zoomOutLogListBtn.Size = new System.Drawing.Size(23, 22);
             this.zoomOutLogListBtn.ToolTipText = "Zoom Out Log List Font";
-            this.zoomOutLogListBtn.Click += new System.EventHandler(this.zoomOutLogListBtn_Click);
+            this.zoomOutLogListBtn.Click += new System.EventHandler(this.ZoomOutLogListBtn_Click);
             // 
             // zoomInLogListBtn
             // 
@@ -292,7 +293,7 @@ namespace Log2Console
             this.zoomInLogListBtn.Name = "zoomInLogListBtn";
             this.zoomInLogListBtn.Size = new System.Drawing.Size(23, 22);
             this.zoomInLogListBtn.ToolTipText = "Zoom In Log List Font";
-            this.zoomInLogListBtn.Click += new System.EventHandler(this.zoomInLogListBtn_Click);
+            this.zoomInLogListBtn.Click += new System.EventHandler(this.ZoomInLogListBtn_Click);
             // 
             // toolStripSeparator10
             // 
@@ -307,7 +308,7 @@ namespace Log2Console
             this.clearBtn.Size = new System.Drawing.Size(54, 22);
             this.clearBtn.Text = "Clear";
             this.clearBtn.ToolTipText = "Clear Log Messages";
-            this.clearBtn.Click += new System.EventHandler(this.clearBtn_Click);
+            this.clearBtn.Click += new System.EventHandler(this.ClearBtn_Click);
             // 
             // toolStripSeparator1
             // 
@@ -329,7 +330,7 @@ namespace Log2Console
             this.searchTextBox.Name = "searchTextBox";
             this.searchTextBox.Size = new System.Drawing.Size(100, 24);
             this.searchTextBox.ToolTipText = "Search Text in Log Messages";
-            this.searchTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.searchTextBox_KeyUp);
+            this.searchTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.SearchTextBox_KeyUp);
             // 
             // toolStripSeparator9
             // 
@@ -346,7 +347,7 @@ namespace Log2Console
             this.logDetailsPanelToggleBtn.Size = new System.Drawing.Size(62, 22);
             this.logDetailsPanelToggleBtn.Text = "Details";
             this.logDetailsPanelToggleBtn.ToolTipText = "Show/Hide Log Details";
-            this.logDetailsPanelToggleBtn.Click += new System.EventHandler(this.logDetailsPanelToggleBtn_Click);
+            this.logDetailsPanelToggleBtn.Click += new System.EventHandler(this.LogDetailsPanelToggleBtn_Click);
             // 
             // loggersPanelToggleBtn
             // 
@@ -358,7 +359,7 @@ namespace Log2Console
             this.loggersPanelToggleBtn.Size = new System.Drawing.Size(69, 22);
             this.loggersPanelToggleBtn.Text = "Loggers";
             this.loggersPanelToggleBtn.ToolTipText = "Show/Hide Loggers";
-            this.loggersPanelToggleBtn.Click += new System.EventHandler(this.loggersPanelToggleBtn_Click);
+            this.loggersPanelToggleBtn.Click += new System.EventHandler(this.LoggersPanelToggleBtn_Click);
             // 
             // toolStripSeparator3
             // 
@@ -372,7 +373,7 @@ namespace Log2Console
             this.settingsBtn.Name = "settingsBtn";
             this.settingsBtn.Size = new System.Drawing.Size(78, 22);
             this.settingsBtn.Text = "Settings...";
-            this.settingsBtn.Click += new System.EventHandler(this.settingsBtn_Click);
+            this.settingsBtn.Click += new System.EventHandler(this.SettingsBtn_Click);
             // 
             // receiversBtn
             // 
@@ -381,7 +382,7 @@ namespace Log2Console
             this.receiversBtn.Name = "receiversBtn";
             this.receiversBtn.Size = new System.Drawing.Size(85, 22);
             this.receiversBtn.Text = "Receivers...";
-            this.receiversBtn.Click += new System.EventHandler(this.receiversBtn_Click);
+            this.receiversBtn.Click += new System.EventHandler(this.ReceiversBtn_Click);
             // 
             // toolStripSeparator14
             // 
@@ -395,7 +396,7 @@ namespace Log2Console
             this.quickLoadBtn.Name = "quickLoadBtn";
             this.quickLoadBtn.Size = new System.Drawing.Size(100, 22);
             this.quickLoadBtn.Text = "Open Log File";
-            this.quickLoadBtn.Click += new System.EventHandler(this.quickLoadBtn_Click);
+            this.quickLoadBtn.Click += new System.EventHandler(this.QuickLoadBtn_Click);
             // 
             // saveBtn
             // 
@@ -405,7 +406,7 @@ namespace Log2Console
             this.saveBtn.Name = "saveBtn";
             this.saveBtn.Size = new System.Drawing.Size(23, 22);
             this.saveBtn.Text = "Export Logs...";
-            this.saveBtn.Click += new System.EventHandler(this.saveBtn_Click);
+            this.saveBtn.Click += new System.EventHandler(this.SaveBtn_Click);
             // 
             // toolStripSeparator4
             // 
@@ -420,7 +421,7 @@ namespace Log2Console
             this.aboutBtn.Size = new System.Drawing.Size(60, 22);
             this.aboutBtn.Text = "About";
             this.aboutBtn.ToolTipText = "About...";
-            this.aboutBtn.Click += new System.EventHandler(this.aboutBtn_Click);
+            this.aboutBtn.Click += new System.EventHandler(this.AboutBtn_Click);
             // 
             // toolStripSeparator12
             // 
@@ -437,7 +438,7 @@ namespace Log2Console
             this.pinOnTopBtn.Name = "pinOnTopBtn";
             this.pinOnTopBtn.Size = new System.Drawing.Size(23, 22);
             this.pinOnTopBtn.Text = "Pin on Top";
-            this.pinOnTopBtn.Click += new System.EventHandler(this.pinOnTopBtn_Click);
+            this.pinOnTopBtn.Click += new System.EventHandler(this.PinOnTopBtn_Click);
             // 
             // versionLabel
             // 
@@ -460,10 +461,10 @@ namespace Log2Console
             this.loggerTreeView.ShowRootLines = false;
             this.loggerTreeView.Size = new System.Drawing.Size(237, 532);
             this.loggerTreeView.TabIndex = 1;
-            this.loggerTreeView.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.loggerTreeView_AfterCheck);
-            this.loggerTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.loggerTreeView_AfterSelect);
-            this.loggerTreeView.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.loggerTreeView_NodeMouseDoubleClick);
-            this.loggerTreeView.MouseUp += new System.Windows.Forms.MouseEventHandler(this.loggerTreeView_MouseUp);
+            this.loggerTreeView.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.LoggerTreeView_AfterCheck);
+            this.loggerTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.LoggerTreeView_AfterSelect);
+            this.loggerTreeView.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.LoggerTreeView_NodeMouseDoubleClick);
+            this.loggerTreeView.MouseUp += new System.Windows.Forms.MouseEventHandler(this.LoggerTreeView_MouseUp);
             // 
             // timeColumnHeader
             // 
@@ -541,7 +542,7 @@ namespace Log2Console
             this.closeLoggersPanelBtn.Name = "closeLoggersPanelBtn";
             this.closeLoggersPanelBtn.Size = new System.Drawing.Size(23, 22);
             this.closeLoggersPanelBtn.Text = "Close Loggers View";
-            this.closeLoggersPanelBtn.Click += new System.EventHandler(this.closeLoggersPanelBtn_Click);
+            this.closeLoggersPanelBtn.Click += new System.EventHandler(this.CloseLoggersPanelBtn_Click);
             // 
             // toolStripSeparator2
             // 
@@ -556,7 +557,7 @@ namespace Log2Console
             this.clearLoggersBtn.Size = new System.Drawing.Size(71, 22);
             this.clearLoggersBtn.Text = "Clear All";
             this.clearLoggersBtn.ToolTipText = "Clear All Loggers and Log Messages";
-            this.clearLoggersBtn.Click += new System.EventHandler(this.clearLoggersBtn_Click);
+            this.clearLoggersBtn.Click += new System.EventHandler(this.ClearLoggersBtn_Click);
             // 
             // collapseAllBtn
             // 
@@ -566,7 +567,7 @@ namespace Log2Console
             this.collapseAllBtn.Size = new System.Drawing.Size(72, 20);
             this.collapseAllBtn.Text = "Collapse";
             this.collapseAllBtn.ToolTipText = "Collapse all sources";
-            this.collapseAllBtn.Click += new System.EventHandler(this.collapseAllBtn_Click);
+            this.collapseAllBtn.Click += new System.EventHandler(this.CollapseAllBtn_Click);
             // 
             // dactivateSourcesBtn
             // 
@@ -576,7 +577,7 @@ namespace Log2Console
             this.dactivateSourcesBtn.Size = new System.Drawing.Size(82, 20);
             this.dactivateSourcesBtn.Text = "Deactivate";
             this.dactivateSourcesBtn.ToolTipText = "Deactivate selected sources";
-            this.dactivateSourcesBtn.Click += new System.EventHandler(this.deactivatedsourcesBtn_Click);
+            this.dactivateSourcesBtn.Click += new System.EventHandler(this.DeactivatedSourcesBtn_Click);
             // 
             // keepHighlightBtn
             // 
@@ -586,7 +587,7 @@ namespace Log2Console
             this.keepHighlightBtn.Size = new System.Drawing.Size(99, 20);
             this.keepHighlightBtn.Text = "Keep selected";
             this.keepHighlightBtn.ToolTipText = "Deactivate all unhiglight sources";
-            this.keepHighlightBtn.Click += new System.EventHandler(this.deactivatedUnselectSourcesBtn_Click);
+            this.keepHighlightBtn.Click += new System.EventHandler(this.DeactivatedUnselectSourcesBtn_Click);
             // 
             // loggerSplitter
             // 
@@ -604,7 +605,7 @@ namespace Log2Console
             this.appNotifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("appNotifyIcon.Icon")));
             this.appNotifyIcon.Text = "appNotifyIcon";
             this.appNotifyIcon.Visible = true;
-            this.appNotifyIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.appNotifyIcon_MouseDoubleClick);
+            this.appNotifyIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.AppNotifyIcon_MouseDoubleClick);
             // 
             // trayContextMenuStrip
             // 
@@ -624,7 +625,7 @@ namespace Log2Console
             this.restoreTrayMenuItem.Name = "restoreTrayMenuItem";
             this.restoreTrayMenuItem.Size = new System.Drawing.Size(188, 22);
             this.restoreTrayMenuItem.Text = "Restore";
-            this.restoreTrayMenuItem.Click += new System.EventHandler(this.restoreTrayMenuItem_Click);
+            this.restoreTrayMenuItem.Click += new System.EventHandler(this.RestoreTrayMenuItem_Click);
             // 
             // toolStripSeparator5
             // 
@@ -636,14 +637,14 @@ namespace Log2Console
             this.settingsTrayMenuItem.Name = "settingsTrayMenuItem";
             this.settingsTrayMenuItem.Size = new System.Drawing.Size(188, 22);
             this.settingsTrayMenuItem.Text = "Settings...";
-            this.settingsTrayMenuItem.Click += new System.EventHandler(this.settingsTrayMenuItem_Click);
+            this.settingsTrayMenuItem.Click += new System.EventHandler(this.SettingsTrayMenuItem_Click);
             // 
             // aboutTrayMenuItem
             // 
             this.aboutTrayMenuItem.Name = "aboutTrayMenuItem";
             this.aboutTrayMenuItem.Size = new System.Drawing.Size(188, 22);
             this.aboutTrayMenuItem.Text = "About Log2Console...";
-            this.aboutTrayMenuItem.Click += new System.EventHandler(this.aboutTrayMenuItem_Click);
+            this.aboutTrayMenuItem.Click += new System.EventHandler(this.AboutTrayMenuItem_Click);
             // 
             // toolStripSeparator6
             // 
@@ -655,7 +656,7 @@ namespace Log2Console
             this.exitTrayMenuItem.Name = "exitTrayMenuItem";
             this.exitTrayMenuItem.Size = new System.Drawing.Size(188, 22);
             this.exitTrayMenuItem.Text = "Exit";
-            this.exitTrayMenuItem.Click += new System.EventHandler(this.exitTrayMenuItem_Click);
+            this.exitTrayMenuItem.Click += new System.EventHandler(this.ExitTrayMenuItem_Click);
             // 
             // logDetailPanel
             // 
@@ -743,7 +744,7 @@ namespace Log2Console
             this.closeLogDetailPanelBtn.Name = "closeLogDetailPanelBtn";
             this.closeLogDetailPanelBtn.Size = new System.Drawing.Size(23, 22);
             this.closeLogDetailPanelBtn.Text = "Close Log Detail Panel";
-            this.closeLogDetailPanelBtn.Click += new System.EventHandler(this.closeLogDetailPanelBtn_Click);
+            this.closeLogDetailPanelBtn.Click += new System.EventHandler(this.CloseLogDetailPanelBtn_Click);
             // 
             // toolStripSeparator11
             // 
@@ -758,7 +759,7 @@ namespace Log2Console
             this.zoomOutLogDetailsBtn.Name = "zoomOutLogDetailsBtn";
             this.zoomOutLogDetailsBtn.Size = new System.Drawing.Size(23, 22);
             this.zoomOutLogDetailsBtn.ToolTipText = "Zoom Out Log Details Font";
-            this.zoomOutLogDetailsBtn.Click += new System.EventHandler(this.zoomOutLogDetailsBtn_Click);
+            this.zoomOutLogDetailsBtn.Click += new System.EventHandler(this.ZoomOutLogDetailsBtn_Click);
             // 
             // zoomInLogDetailsBtn
             // 
@@ -768,7 +769,7 @@ namespace Log2Console
             this.zoomInLogDetailsBtn.Name = "zoomInLogDetailsBtn";
             this.zoomInLogDetailsBtn.Size = new System.Drawing.Size(23, 22);
             this.zoomInLogDetailsBtn.ToolTipText = "Zoom In Log Details Font";
-            this.zoomInLogDetailsBtn.Click += new System.EventHandler(this.zoomInLogDetailsBtn_Click);
+            this.zoomInLogDetailsBtn.Click += new System.EventHandler(this.ZoomInLogDetailsBtn_Click);
             // 
             // toolStripSeparator7
             // 
@@ -782,7 +783,7 @@ namespace Log2Console
             this.copyLogDetailBtn.Name = "copyLogDetailBtn";
             this.copyLogDetailBtn.Size = new System.Drawing.Size(55, 22);
             this.copyLogDetailBtn.Text = "Copy";
-            this.copyLogDetailBtn.Click += new System.EventHandler(this.copyLogDetailBtn_Click);
+            this.copyLogDetailBtn.Click += new System.EventHandler(this.CopyLogDetailBtn_Click);
             // 
             // tabExceptions
             // 
@@ -870,7 +871,7 @@ namespace Log2Console
             this.btnOpenFileInVS.Name = "btnOpenFileInVS";
             this.btnOpenFileInVS.Size = new System.Drawing.Size(23, 22);
             this.btnOpenFileInVS.Text = "Export Logs...";
-            this.btnOpenFileInVS.Click += new System.EventHandler(this.btnOpenFileInVS_Click);
+            this.btnOpenFileInVS.Click += new System.EventHandler(this.BtnOpenFileInVS_Click);
             // 
             // logDetailSplitter
             // 
@@ -895,7 +896,7 @@ namespace Log2Console
             this.deleteLoggerTreeMenuItem.Name = "deleteLoggerTreeMenuItem";
             this.deleteLoggerTreeMenuItem.Size = new System.Drawing.Size(163, 22);
             this.deleteLoggerTreeMenuItem.Text = "Clear Logger";
-            this.deleteLoggerTreeMenuItem.Click += new System.EventHandler(this.deleteLoggerTreeMenuItem_Click);
+            this.deleteLoggerTreeMenuItem.Click += new System.EventHandler(this.DeleteLoggerTreeMenuItem_Click);
             // 
             // toolStripSeparator16
             // 
@@ -907,7 +908,7 @@ namespace Log2Console
             this.deleteAllLoggerTreeMenuItem.Name = "deleteAllLoggerTreeMenuItem";
             this.deleteAllLoggerTreeMenuItem.Size = new System.Drawing.Size(163, 22);
             this.deleteAllLoggerTreeMenuItem.Text = "Clear All Loggers";
-            this.deleteAllLoggerTreeMenuItem.Click += new System.EventHandler(this.deleteAllLoggerTreeMenuItem_Click);
+            this.deleteAllLoggerTreeMenuItem.Click += new System.EventHandler(this.DeleteAllLoggerTreeMenuItem_Click);
             // 
             // openFileDialog1
             // 
@@ -937,8 +938,8 @@ namespace Log2Console
             this.logListView.TabIndex = 0;
             this.logListView.UseCompatibleStateImageBehavior = false;
             this.logListView.View = System.Windows.Forms.View.Details;
-            this.logListView.SelectedIndexChanged += new System.EventHandler(this.logListView_SelectedIndexChanged);
-            this.logListView.KeyDown += new System.Windows.Forms.KeyEventHandler(this.logListView_KeyDown);
+            this.logListView.SelectedIndexChanged += new System.EventHandler(this.LogListView_SelectedIndexChanged);
+            this.logListView.KeyDown += new System.Windows.Forms.KeyEventHandler(this.LogListView_KeyDown);
             // 
             // columnHeader6
             // 
@@ -1112,7 +1113,7 @@ namespace Log2Console
         private ToolStrip logDetailToolStrip;
         private ToolStripButton btnOpenFileInVS;
         private TabPage tabExceptions;
-        private RichTextBoxLinks.RichTextBoxEx tbExceptions;
+        private RichTextBoxEx tbExceptions;
         private ToolStripButton quickLoadBtn;
         private OpenFileDialog openFileDialog1;
         private ToolStripButton dactivateSourcesBtn;

@@ -1,15 +1,25 @@
-using Log2Console.Log;
 using System;
 using System.ComponentModel;
 using System.IO;
 using System.Text;
 using System.Xml;
+using Log2Console.Log;
 
 namespace Log2Console.Receiver
 {
     public static class ReceiverUtils
     {
-        static readonly DateTime s1970 = new DateTime(1970, 1, 1);
+        private static readonly DateTime s1970 = new DateTime(1970, 1, 1);
+
+        /// <summary>
+        /// We can share settings to improve performance
+        /// </summary>
+        private static readonly XmlReaderSettings XmlSettings = CreateSettings();
+
+        /// <summary>
+        /// We can share parser context to improve performance
+        /// </summary>
+        private static readonly XmlParserContext XmlContext = CreateContext();
 
         public static string GetTypeDescription(Type type)
         {
@@ -17,28 +27,20 @@ namespace Log2Console.Receiver
             return attr != null ? attr.DisplayName : type.ToString();
         }
 
-        /// <summary>
-        /// We can share settings to improve performance
-        /// </summary>
-        static readonly XmlReaderSettings XmlSettings = CreateSettings();
+        private static XmlReaderSettings CreateSettings() =>
+            new XmlReaderSettings
+            {
+                CloseInput = false, 
+                ValidationType = ValidationType.None
+            };
 
-        static XmlReaderSettings CreateSettings()
-        {
-            return new XmlReaderSettings { CloseInput = false, ValidationType = ValidationType.None };
-        }
-
-        /// <summary>
-        /// We can share parser context to improve performance
-        /// </summary>
-        static readonly XmlParserContext XmlContext = CreateContext();
-
-        static XmlParserContext CreateContext()
+        private static XmlParserContext CreateContext()
         {
             var nt = new NameTable();
-            var nsmanager = new XmlNamespaceManager(nt);
-            nsmanager.AddNamespace("log4j", "http://jakarta.apache.org/log4j/");
-            nsmanager.AddNamespace("nlog", "http://nlog-project.org");
-            return new XmlParserContext(nt, nsmanager, "elem", XmlSpace.None, Encoding.UTF8);
+            var nsManager = new XmlNamespaceManager(nt);
+            nsManager.AddNamespace("log4j", "http://jakarta.apache.org/log4j/");
+            nsManager.AddNamespace("nlog", "http://nlog-project.org");
+            return new XmlParserContext(nt, nsManager, "elem", XmlSpace.None, Encoding.UTF8);
         }
 
         /// <summary>
@@ -50,7 +52,9 @@ namespace Log2Console.Receiver
             // logStream is closed and XmlReader throws the exception,
             // which we handle in TcpReceiver
             using (var reader = XmlReader.Create(logStream, XmlSettings, XmlContext))
+            {
                 return ParseLog4JXmlLogEvent(reader, defaultLogger);
+            }
         }
 
         /// <summary>
@@ -61,7 +65,9 @@ namespace Log2Console.Receiver
             try
             {
                 using (var reader = new XmlTextReader(logEvent, XmlNodeType.Element, XmlContext))
+                {
                     return ParseLog4JXmlLogEvent(reader, defaultLogger);
+                }
             }
             catch (Exception e)
             {
@@ -100,18 +106,21 @@ namespace Log2Console.Receiver
             var logMsg = new LogMessage();
 
             reader.Read();
-            if ((reader.MoveToContent() != XmlNodeType.Element) || (reader.Name != "log4j:event"))
+            if (reader.MoveToContent() != XmlNodeType.Element || reader.Name != "log4j:event")
+            {
                 throw new Exception("The Log Event is not a valid log4j Xml block.");
+            }
 
             logMsg.LoggerName = reader.GetAttribute("logger");
             logMsg.Level = LogLevels.Instance[reader.GetAttribute("level")];
             logMsg.ThreadName = reader.GetAttribute("thread");
 
-            long timeStamp;
-            if (long.TryParse(reader.GetAttribute("timestamp"), out timeStamp))
+            if (long.TryParse(reader.GetAttribute("timestamp"), out var timeStamp))
+            {
                 logMsg.TimeStamp = s1970.AddMilliseconds(timeStamp).ToLocalTime();
+            }
 
-            int eventDepth = reader.Depth;
+            var eventDepth = reader.Depth;
             reader.Read();
             while (reader.Depth > eventDepth)
             {
@@ -131,14 +140,18 @@ namespace Log2Console.Receiver
                             logMsg.CallSiteClass = reader.GetAttribute("class");
                             logMsg.CallSiteMethod = reader.GetAttribute("method");
                             logMsg.SourceFileName = reader.GetAttribute("file");
-                            uint sourceFileLine;
-                            if (uint.TryParse(reader.GetAttribute("line"), out sourceFileLine))
+                            if (uint.TryParse(reader.GetAttribute("line"), out var sourceFileLine))
+                            {
                                 logMsg.SourceFileLineNr = sourceFileLine;
+                            }
+
                             break;
                         case "nlog:eventSequenceNumber":
-                            ulong sequenceNumber;
-                            if (ulong.TryParse(reader.ReadString(), out sequenceNumber))
+                            if (ulong.TryParse(reader.ReadString(), out var sequenceNumber))
+                            {
                                 logMsg.SequenceNr = sequenceNumber;
+                            }
+
                             break;
                         case "nlog:locationInfo":
                             break;
@@ -149,15 +162,15 @@ namespace Log2Console.Receiver
                             while (reader.MoveToContent() == XmlNodeType.Element
                                    && reader.LocalName == "data")
                             {
-                                string name = reader.GetAttribute("name");
-                                string value = reader.GetAttribute("value");
+                                var name = reader.GetAttribute("name");
+                                var value = reader.GetAttribute("value");
                                 if (name != null && name.ToLower().Equals("exceptions"))
                                 {
                                     logMsg.ExceptionString = value;
                                 }
                                 else
                                 {
-                                    logMsg.Properties[name] = value;
+                                    if (name != null) logMsg.Properties[name] = value;
                                 }
 
                                 reader.Read();
@@ -166,6 +179,7 @@ namespace Log2Console.Receiver
                             break;
                     }
                 }
+
                 reader.Read();
             }
 

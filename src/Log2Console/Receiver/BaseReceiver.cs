@@ -1,45 +1,29 @@
 using System;
 using System.ComponentModel;
-
 using Log2Console.Log;
-
+using Newtonsoft.Json;
 
 namespace Log2Console.Receiver
 {
-    [Serializable]
     public abstract class BaseReceiver : MarshalByRefObject, IReceiver
     {
-        [NonSerialized]
         protected ILogMessageNotifiable Notifiable;
-
-        [NonSerialized]
-        private string _displayName;
-
 
         #region IReceiver Members
 
+        [JsonIgnore]
         public abstract string SampleClientConfig { get; }
 
         [Browsable(false)]
-        public string DisplayName
-        {
-            get { return _displayName; }
-            protected set { _displayName = value; }
-        }
+        public string DisplayName { get; protected set; }
 
         public abstract void Initialize();
         public abstract void Terminate();
 
-        public virtual void Attach(ILogMessageNotifiable notifiable)
-        {
-            Notifiable = notifiable;
-        }
+        public virtual void Attach(ILogMessageNotifiable notifiable) => Notifiable = notifiable;
 
-        public virtual void Detach()
-        {
-            Notifiable = null;
-        }
+        public virtual void Detach() => Notifiable = null;
 
-        #endregion
+        #endregion IReceiver Members
     }
 }

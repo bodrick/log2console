@@ -1,25 +1,57 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
-
-using CatchOutputDbg;
-
 using Log2Console.Log;
-
 
 namespace Log2Console.Receiver
 {
-    [Serializable]
     [DisplayName("WinDebug (OutputDebugString)")]
     public class WinDebugReceiver : BaseReceiver
     {
+        private void DebugMonitor_OnOutputDebugString(int pid, string text)
+        {
+            // Trim ending newline (if any) 
+            if (text.EndsWith(Environment.NewLine))
+            {
+                text = text.Substring(0, text.Length - Environment.NewLine.Length);
+            }
+
+            // Replace dots by "middle dots" to preserve Logger namespace
+            var processName = GetProcessName(pid);
+            processName = processName.Replace('.', '·');
+
+            var logMsg = new LogMessage
+            {
+                Message = text,
+                LoggerName = $"{processName}.{pid}",
+                Level = LogLevels.Instance[LogLevel.Debug],
+                ThreadName = pid.ToString(),
+                TimeStamp = DateTime.Now
+            };
+            Notifiable.Notify(logMsg);
+        }
+
+        private static string GetProcessName(int pid)
+        {
+            if (pid == -1)
+            {
+                return Process.GetCurrentProcess().ProcessName;
+            }
+
+            try
+            {
+                return Process.GetProcessById(pid).ProcessName;
+            }
+            catch
+            {
+                return "<exited>";
+            }
+        }
+
         #region Overrides of BaseReceiver
 
         [Browsable(false)]
-        public override string SampleClientConfig
-        {
-            get { return "N/A"; }
-        }
+        public override string SampleClientConfig => "N/A";
 
         public override void Initialize()
         {
@@ -33,41 +65,6 @@ namespace Log2Console.Receiver
             DebugMonitor.Stop();
         }
 
-        #endregion
-
-
-        void DebugMonitor_OnOutputDebugString(int pid, string text)
-        {
-            // Trim ending newline (if any) 
-            if (text.EndsWith(Environment.NewLine))
-                text = text.Substring(0, text.Length - Environment.NewLine.Length);
-
-            // Replace dots by "middle dots" to preserve Logger namespace
-            string processName = GetProcessName(pid);
-            processName = processName.Replace('.', '·');
-
-            LogMessage logMsg = new LogMessage();
-            logMsg.Message = text;
-            logMsg.LoggerName = processName;
-            logMsg.LoggerName = String.Format("{0}.{1}", processName, pid);
-            logMsg.Level = LogLevels.Instance[LogLevel.Debug];
-            logMsg.ThreadName = pid.ToString();
-            logMsg.TimeStamp = DateTime.Now;
-            Notifiable.Notify(logMsg);
-        }
-
-        private static string GetProcessName(int pid)
-        {
-            if (pid == -1)
-                return Process.GetCurrentProcess().ProcessName;
-            try
-            {
-                return Process.GetProcessById(pid).ProcessName;
-            }
-            catch
-            {
-                return "<exited>";
-            }
-        }
+        #endregion Overrides of BaseReceiver
     }
 }

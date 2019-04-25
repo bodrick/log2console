@@ -55,7 +55,7 @@
             this.receiversListView.TabIndex = 0;
             this.receiversListView.UseCompatibleStateImageBehavior = false;
             this.receiversListView.View = System.Windows.Forms.View.List;
-            this.receiversListView.SelectedIndexChanged += new System.EventHandler(this.receiversListView_SelectedIndexChanged);
+            this.receiversListView.SelectedIndexChanged += new System.EventHandler(this.ReceiversListView_SelectedIndexChanged);
             // 
             // toolStripContainer1
             // 
@@ -95,7 +95,7 @@
             this.addReceiverCombo.Name = "addReceiverCombo";
             this.addReceiverCombo.Size = new System.Drawing.Size(51, 22);
             this.addReceiverCombo.Text = "Add...";
-            this.addReceiverCombo.DropDownItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.addReceiverCombo_DropDownItemClicked);
+            this.addReceiverCombo.DropDownItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.AddReceiverCombo_DropDownItemClicked);
             // 
             // removeReceiverBtn
             // 
@@ -106,7 +106,7 @@
             this.removeReceiverBtn.Name = "removeReceiverBtn";
             this.removeReceiverBtn.Size = new System.Drawing.Size(54, 22);
             this.removeReceiverBtn.Text = "Remove";
-            this.removeReceiverBtn.Click += new System.EventHandler(this.removeReceiverBtn_Click);
+            this.removeReceiverBtn.Click += new System.EventHandler(this.RemoveReceiverBtn_Click);
             // 
             // label2
             // 

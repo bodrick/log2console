@@ -1,370 +1,152 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.ComponentModel;
 using System.Drawing;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 using System.Windows.Forms;
-
 using Log2Console.Log;
 using Log2Console.Receiver;
-
+using Newtonsoft.Json;
 
 namespace Log2Console.Settings
 {
-   
-
-    [Serializable]
     public sealed class UserSettings
     {
-        internal static readonly Color DefaultTraceLevelColor = Color.Gray;
-        internal static readonly Color DefaultDebugLevelColor = Color.Black;
-        internal static readonly Color DefaultInfoLevelColor = Color.Green;
-        internal static readonly Color DefaultWarnLevelColor = Color.Orange;
-        internal static readonly Color DefaultErrorLevelColor = Color.Red;
-        internal static readonly Color DefaultFatalLevelColor = Color.Purple;
+        private const string SettingsFileName = "UserSettings.json";
 
-        private static readonly FieldType[] DefaultColumnConfiguration =
-        {
-            new FieldType(LogMessageField.TimeStamp, "Time"),
-            new FieldType(LogMessageField.Level, "Level"),
-            new FieldType(LogMessageField.RootLoggerName, "RootLoggerName"),
-            new FieldType(LogMessageField.ThreadName, "Thread"),
-            new FieldType(LogMessageField.Message, "Message"),
-        };
-
-        private static readonly FieldType[] DefaultDetailsMessageConfiguration =
-        {
-            new FieldType(LogMessageField.TimeStamp, "Time"),
-            new FieldType(LogMessageField.Level, "Level"),
-            new FieldType(LogMessageField.RootLoggerName, "RootLoggerName"),
-            new FieldType(LogMessageField.ThreadName, "Thread"),
-            new FieldType(LogMessageField.Message, "Message"),
-        };
-
-        private static readonly FieldType[] DefaultCsvColumnHeaderConfiguration =
-        {
-            new FieldType(LogMessageField.SequenceNr, "sequence"),
-            new FieldType(LogMessageField.TimeStamp, "time"),
-            new FieldType(LogMessageField.Level, "level"),
-            new FieldType(LogMessageField.ThreadName, "thread"),
-            new FieldType(LogMessageField.CallSiteClass, "class"),
-            new FieldType(LogMessageField.CallSiteMethod, "method"),
-            new FieldType(LogMessageField.Message, "message"),
-            new FieldType(LogMessageField.Exception, "exception"),
-            new FieldType(LogMessageField.SourceFileName, "file")
-        };
-
-        [NonSerialized]
-        private const string SettingsFileName = "UserSettings.dat";
-
-        [NonSerialized]
-        private Dictionary<string, int> _columnProperties = new Dictionary<string, int>();
-
-        [NonSerialized] 
-        private Dictionary<string, FieldType> _csvHeaderFieldTypes;
-
-        [NonSerialized] 
-        private Dictionary<string, string> _sourceCodeLocationMap;
-
-        private static UserSettings _instance;
-
-        private bool _recursivlyEnableLoggers = true;
-        private bool _hideTaskbarIcon = false;
-        private bool _notifyNewLogWhenHidden = true;
-        private bool _alwaysOnTop = false;
-        private uint _transparency = 100;
-        private bool _highlightLogger = true;
-        private bool _highlightLogMessages = true;
-        private FieldType[] _columnConfiguration;
-        private FieldType[] _messageDetailConfiguration;
-
-
-        private FieldType[] _csvColumnHeaderFields;
-        private SourceFileLocation[] _sourceLocationMapConfiguration;
-        private bool _autoScrollToLastLog = true;
-        private bool _groupLogMessages = false;
-        private int _messageCycleCount = 0;
+        private static readonly Lazy<UserSettings> instance = new Lazy<UserSettings>(() => new UserSettings());
         private string _timeStampFormatString = "yyyy-MM-dd HH:mm:ss.ffff";
-
-        private Font _defaultFont = null;
-        private Font _logListFont = null;
-        private Font _logDetailFont = null;
-        private Font _loggerTreeFont = null;
-
-        private Color _logListBackColor = Color.Empty;
-        private Color _logMessageBackColor = Color.Empty;
-
-        private Color _traceLevelColor = DefaultTraceLevelColor;
-        private Color _debugLevelColor = DefaultDebugLevelColor;
-        private Color _infoLevelColor = DefaultInfoLevelColor;
-        private Color _warnLevelColor = DefaultWarnLevelColor;
-        private Color _errorLevelColor = DefaultErrorLevelColor;
-        private Color _fatalLevelColor = DefaultFatalLevelColor;
-
-        private bool _msgDetailsProperties = false;
-        private bool _msgDetailsException = true;
-        private bool _msgDetailsUseRtf = true;
-
-        private LogLevelInfo _logLevelInfo;
-        private List<IReceiver> _receivers = new List<IReceiver>();
-        private LayoutSettings _layout = new LayoutSettings();
-
+        private uint _transparency = 100;
 
         private UserSettings()
         {
-            // Set default values
-            _logLevelInfo = LogLevels.Instance[(int)LogLevel.Trace];
-        }
-
-        /// <summary>
-        /// Creates and returns an exact copy of the settings.
-        /// </summary>
-        /// <returns></returns>
-        public UserSettings Clone()
-        {
-            // We're going to serialize and deserialize to make the copy. That
-            // way if we add new properties and/or settings, we don't have to 
-            // maintain a copy constructor.
-            BinaryFormatter formatter = new BinaryFormatter();
-
-            using (MemoryStream ms = new MemoryStream())
+            var settingsFilePath = GetSettingsFilePath();
+            if (File.Exists(settingsFilePath))
             {
-                // Serialize the object.
-                formatter.Serialize(ms, this);
-
-                // Reset the stream and deserialize it.
-                ms.Position = 0;
-
-                return formatter.Deserialize(ms) as UserSettings;
-            }
-        }
-
-        public static UserSettings Instance
-        {
-            get { return _instance; }
-            set { _instance = value; }
-        }
-
-        public static bool Load()
-        {
-            bool ok = false;
-
-            _instance = new UserSettings();
-
-            string settingsFilePath = GetSettingsFilePath();
-            if (!File.Exists(settingsFilePath))
-                return ok;
-
-            try
-            {
-                using (FileStream fs = new FileStream(settingsFilePath, FileMode.Open))
+                try
                 {
-                    if (fs.Length > 0)
+                    var serializerSettings = new JsonSerializerSettings
                     {
-                        BinaryFormatter bf = new BinaryFormatter();
-                        _instance = bf.Deserialize(fs) as UserSettings;
+                        Formatting = Formatting.Indented, TypeNameHandling = TypeNameHandling.Auto
+                    };
+                    // deserialize JSON directly from a file
+                    using (var file = File.OpenText(settingsFilePath))
+                    {
+                        JsonConvert.PopulateObject(file.ReadToEnd(), this, serializerSettings);
+                    }
 
-                        // During 1st load, some members are set to null
-                        if (_instance != null)
-                        {
-                            if (_instance._receivers == null)
-                                _instance._receivers = new List<IReceiver>();
-
-                            if (_instance._layout == null)
-                                _instance._layout = new LayoutSettings();
-                        }
-
-                        ok = true;
+                    FirstStartup = false;
+                }
+                catch (Exception)
+                {
+                    // The settings file might be corrupted or from too different version, delete it...
+                    try
+                    {
+                        File.Delete(settingsFilePath);
+                    }
+                    catch
+                    {
+                        // ignored
                     }
                 }
             }
-            catch (Exception)
+
+            if (FirstStartup)
             {
-                // The settings file might be corrupted or from too different version, delete it...
-                try
-                {
-                    File.Delete(settingsFilePath);
-                }
-                catch
-                {
-                    ok = false;
-                }
-            }
-
-            return ok;
-        }
-
-        private static string GetSettingsFilePath()
-        {
-            string userDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            
-            DirectoryInfo di = new DirectoryInfo(userDir);
-            di = di.CreateSubdirectory("Log2Console");
-
-            return di.FullName + Path.DirectorySeparatorChar + SettingsFileName;
-        }
-
-        public void Save()
-        {
-            string settingsFilePath = GetSettingsFilePath();
-
-            using (FileStream fs = new FileStream(settingsFilePath, FileMode.Create))
-            {
-                BinaryFormatter bf = new BinaryFormatter();
-                bf.Serialize(fs, this);
+                MessageDetailConfiguration = Defaults.DefaultDetailsMessageConfiguration;
+                ColumnConfiguration = Defaults.DefaultColumnConfiguration;
+                CsvHeaderColumns = Defaults.DefaultCsvColumnHeaderConfiguration;
             }
         }
 
-        public void Close()
-        {
-            foreach (IReceiver receiver in _receivers)
-            {
-                receiver.Detach();
-                receiver.Terminate();
-            }
-            _receivers.Clear();
-        }        
+        internal bool FirstStartup { get; } = true;
+
+        public static UserSettings Instance => instance.Value;
 
         [Category("Appearance")]
         [Description("Hides the taskbar icon, only the tray icon will remain visible.")]
         [DisplayName("Hide Taskbar Icon")]
-        public bool HideTaskbarIcon
-        {
-            get { return _hideTaskbarIcon; }
-            set { _hideTaskbarIcon = value; }
-        }
+        public bool HideTaskbarIcon { get; set; }
 
         [Category("Appearance")]
         [Description("The Log2Console window will remain on top of all other windows.")]
         [DisplayName("Always On Top")]
-        public bool AlwaysOnTop
-        {
-            get { return _alwaysOnTop; }
-            set { _alwaysOnTop = value; }
-        }
+        public bool AlwaysOnTop { get; set; }
 
         [Category("Appearance")]
         [Description("Select a transparency factor for the main window.")]
         public uint Transparency
         {
-            get { return _transparency; }
-            set { _transparency = Math.Max(10, Math.Min(100, value)); }
+            get => _transparency;
+            set => _transparency = Math.Max(10, Math.Min(100, value));
         }
 
         [Category("Appearance")]
         [Description("Highlight the Logger of the selected Log Message.")]
         [DisplayName("Highlight Logger")]
-        public bool HighlightLogger
-        {
-            get { return _highlightLogger; }
-            set { _highlightLogger = value; }
-        }
+        public bool HighlightLogger { get; set; } = true;
 
         [Category("Appearance")]
         [Description("Highlight the Log Messages of the selected Logger.")]
         [DisplayName("Highlight Log Messages")]
-        public bool HighlightLogMessages
-        {
-            get { return _highlightLogMessages; }
-            set { _highlightLogMessages = value; }
-        }        
+        public bool HighlightLogMessages { get; set; } = true;
 
         [Category("Columns")]
         [DisplayName("Column Settings")]
-        [Description("Configure which Columns to Display")]        
-        public FieldType[] ColumnConfiguration
-        {
-            get { return _columnConfiguration ?? (ColumnConfiguration = DefaultColumnConfiguration); }
-            set
-            {
-                _columnConfiguration = value;
-                UpdateColumnPropeties();
-            }
-        }
-
+        [Description("Configure which Columns to Display")]
+        public List<FieldType> ColumnConfiguration { get; set; }
 
         [Category("Columns")]
         [DisplayName("CSV File Header Column Settings")]
-        [Description("Configures which columns maps to which fields when auto detecting the CSV structure based on the header")]        
-        public FieldType[] CsvHeaderColumns
-        {
-            get { return _csvColumnHeaderFields ?? (CsvHeaderColumns = DefaultCsvColumnHeaderConfiguration); }
-            set
-            {
-                _csvColumnHeaderFields = value;
-                UpdateCsvColumnHeader();
-            }
-        }
+        [Description(
+            "Configures which columns maps to which fields when auto detecting the CSV structure based on the header")]
+        public List<FieldType> CsvHeaderColumns { get; set; }
 
         [Category("Source File Configuration")]
         [DisplayName("Source Location")]
         [Description("Map the Log File Location to the Local Source Code Location")]
-        public SourceFileLocation[] SourceLocationMapConfiguration
-        {
-            get { return _sourceLocationMapConfiguration; }
-            set
-            {
-                _sourceLocationMapConfiguration = value;
-                UpdateSourceCodeLocationMap();
-            }
-        }
-
+        public List<SourceFileLocation> SourceLocationMapConfiguration { get; set; }
 
         [Category("Notification")]
         [Description("A balloon tip will be displayed when a new log message arrives and the window is hidden.")]
         [DisplayName("Notify New Log When Hidden")]
-        public bool NotifyNewLogWhenHidden
-        {
-            get { return _notifyNewLogWhenHidden; }
-            set { _notifyNewLogWhenHidden = value; }
-        }
+        public bool NotifyNewLogWhenHidden { get; set; } = true;
 
         [Category("Notification")]
         [Description("Automatically scroll to the last log message.")]
         [DisplayName("Auto Scroll to Last Log")]
-        public bool AutoScrollToLastLog
-        {
-            get { return _autoScrollToLastLog; }
-            set { _autoScrollToLastLog = value; }
-        }
+        public bool AutoScrollToLastLog { get; set; } = true;
 
 
         [Category("Logging")]
         [Description("Groups the log messages based on the Logger Name.")]
         [DisplayName("Group Log Messages by Loggers")]
-        public bool GroupLogMessages
-        {
-            get { return _groupLogMessages; }
-            set { _groupLogMessages = value; }
-        }
+        public bool GroupLogMessages { get; set; }
 
         [Category("Logging")]
         [Description("When greater than 0, the log messages are limited to that number.")]
         [DisplayName("Message Cycle Count")]
-        public int MessageCycleCount
-        {
-            get { return _messageCycleCount; }
-            set { _messageCycleCount = value; }
-        }
+        public int MessageCycleCount { get; set; }
 
         [Category("Logging")]
-        [Description("Defines the format to be used to display the log message timestamps (cf. DateTime.ToString(format) in the .NET Framework.")]
+        [Description(
+            "Defines the format to be used to display the log message timestamps (cf. DateTime.ToString(format) in the .NET Framework.")]
         [DisplayName("TimeStamp Format String")]
         public string TimeStampFormatString
         {
-            get { return _timeStampFormatString; }
+            get => _timeStampFormatString;
             set
             {
                 // Check validity
                 try
                 {
-                    string str= DateTime.Now.ToString(value); // If error, will throw FormatException
+                    var dummy = DateTime.Now.ToString(value); // If error, will throw FormatException
                     _timeStampFormatString = value;
                 }
                 catch (FormatException ex)
                 {
-                    MessageBox.Show(Form.ActiveForm, ex.Message, Form.ActiveForm.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(Form.ActiveForm, ex.Message, Form.ActiveForm?.Text, MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
                     _timeStampFormatString = "G"; // Back to default
                 }
             }
@@ -373,254 +155,133 @@ namespace Log2Console.Settings
         [Category("Logging")]
         [Description("When a logger is enabled or disabled, do the same for all child loggers.")]
         [DisplayName("Recursively Enable Loggers")]
-        public bool RecursivlyEnableLoggers
-        {
-            get { return _recursivlyEnableLoggers; }
-            set { _recursivlyEnableLoggers = value; }
-        }
+        public bool RecursivelyEnableLoggers { get; set; } = true;
 
         [Category("Message Details")]
         [DisplayName("Details information")]
         [Description("Configure which information to Display in the message details")]
-        public FieldType[] MessageDetailConfiguration
-        {
-            get { return _messageDetailConfiguration ?? (MessageDetailConfiguration = DefaultDetailsMessageConfiguration); }
-            set
-            {
-                _messageDetailConfiguration = value;
-            }
-        }
+        public List<FieldType> MessageDetailConfiguration { get; set; }
 
         [Category("Message Details")]
         [Description("Show or hide the message properties in the message details panel.")]
         [DisplayName("Show Properties")]
-        public bool ShowMsgDetailsProperties
-        {
-            get { return _msgDetailsProperties; }
-            set { _msgDetailsProperties = value; }
-        }
+        public bool ShowMsgDetailsProperties { get; set; }
 
         [Category("Message Details")]
         [Description("Show or hide the exception in the message details panel.")]
         [DisplayName("Show Exception")]
-        public bool ShowMsgDetailsException
-        {
-            get { return _msgDetailsException; }
-            set { _msgDetailsException = value; }
-        }
+        public bool ShowMsgDetailsException { get; set; } = true;
 
         [Category("Message Details")]
         [Description("Use the Rich Text Format")]
         [DisplayName("Use Rtf")]
-        public bool UseMsgDetailsRtf
-        {
-            get { return _msgDetailsUseRtf; }
-            set { _msgDetailsUseRtf = value; }
-        }
+        public bool UseMsgDetailsRtf { get; set; } = true;
 
         [Category("Fonts")]
         [Description("Set the default Font.")]
         [DisplayName("Default Font")]
-        public Font DefaultFont
-        {
-          get { return _defaultFont; }
-          set { _defaultFont = value; }
-        }
+        public Font DefaultFont { get; set; }
 
         [Category("Fonts")]
         [Description("Set the Font of the Log List View.")]
         [DisplayName("Log List View Font")]
-        public Font LogListFont
-        {
-            get { return _logListFont; }
-            set { _logListFont = value; }
-        }
+        public Font LogListFont { get; set; }
 
         [Category("Fonts")]
         [Description("Set the Font of the Log Detail View.")]
         [DisplayName("Log Detail View Font")]
-        public Font LogDetailFont
-        {
-            get { return _logDetailFont; }
-            set { _logDetailFont = value; }
-        }
+        public Font LogDetailFont { get; set; }
 
         [Category("Fonts")]
         [Description("Set the Font of the Logger Tree.")]
         [DisplayName("Logger Tree Font")]
-        public Font LoggerTreeFont
-        {
-            get { return _loggerTreeFont; }
-            set { _loggerTreeFont = value; }
-        }
+        public Font LoggerTreeFont { get; set; }
 
         [Category("Colors")]
         [Description("Set the Background Color of the Log List View.")]
         [DisplayName("Log List View Background Color")]
-        public Color LogListBackColor
-        {
-            get { return _logListBackColor; }
-            set { _logListBackColor = value; }
-        }
+        public Color LogListBackColor { get; set; } = Color.Empty;
 
         [Category("Colors")]
         [Description("Set the Background Color of the Log Message details.")]
         [DisplayName("Log Message details Background Color")]
-        public Color LogMessageBackColor
-        {
-            get { return _logMessageBackColor; }
-            set { _logMessageBackColor = value; }
-        }
+        public Color LogMessageBackColor { get; set; } = Color.Empty;
 
 
         [Category("Log Level Colors")]
         [DisplayName("1 - Trace Level Color")]
-        public Color TraceLevelColor
-        {
-            get { return _traceLevelColor; }
-            set { _traceLevelColor = value; }
-        }
+        public Color TraceLevelColor { get; set; } = Defaults.DefaultTraceLevelColor;
 
         [Category("Log Level Colors")]
         [DisplayName("2 - Debug Level Color")]
-        public Color DebugLevelColor
-        {
-            get { return _debugLevelColor; }
-            set { _debugLevelColor = value; }
-        }
+        public Color DebugLevelColor { get; set; } = Defaults.DefaultDebugLevelColor;
 
         [Category("Log Level Colors")]
         [DisplayName("3 - Info Level Color")]
-        public Color InfoLevelColor
-        {
-            get { return _infoLevelColor; }
-            set { _infoLevelColor = value; }
-        }
+        public Color InfoLevelColor { get; set; } = Defaults.DefaultInfoLevelColor;
 
         [Category("Log Level Colors")]
         [DisplayName("4 - Warning Level Color")]
-        public Color WarnLevelColor
-        {
-            get { return _warnLevelColor; }
-            set { _warnLevelColor = value; }
-        }
+        public Color WarnLevelColor { get; set; } = Defaults.DefaultWarnLevelColor;
 
         [Category("Log Level Colors")]
         [DisplayName("5 - Error Level Color")]
-        public Color ErrorLevelColor
-        {
-            get { return _errorLevelColor; }
-            set { _errorLevelColor = value; }
-        }
+        public Color ErrorLevelColor { get; set; } = Defaults.DefaultErrorLevelColor;
 
         [Category("Log Level Colors")]
         [DisplayName("6 - Fatal Level Color")]
-        public Color FatalLevelColor
-        {
-            get { return _fatalLevelColor; }
-            set { _fatalLevelColor = value; }
-        }
-
+        public Color FatalLevelColor { get; set; } = Defaults.DefaultFatalLevelColor;
 
         /// <summary>
-        /// This setting is not available through the Settings PropertyGrid.
+        ///     This setting is not available through the Settings PropertyGrid.
         /// </summary>
         [Browsable(false)]
-        internal LogLevelInfo LogLevelInfo
-        {
-            get { return _logLevelInfo; }
-            set { _logLevelInfo = value; }
-        }
+        internal LogLevelInfo LogLevelInfo { get; set; } = LogLevels.Instance[LogLevel.Trace];
 
         /// <summary>
-        /// This setting is not available through the Settings PropertyGrid.
+        ///     This setting is not available through the Settings PropertyGrid.
         /// </summary>
-        [Browsable(false)]
-        internal List<IReceiver> Receivers
-        {
-            get { return _receivers; }
-            set { _receivers = value; }
-        }
+        [JsonProperty]
+        internal List<IReceiver> Receivers { get; set; } = new List<IReceiver>();
 
         /// <summary>
-        /// This setting is not available through the Settings PropertyGrid.
+        ///     This setting is not available through the Settings PropertyGrid.
         /// </summary>
-        [Browsable(false)]
-        internal LayoutSettings Layout
+        [JsonProperty]
+        internal LayoutSettings Layout { get; set; } = new LayoutSettings();
+
+        private static string GetSettingsFilePath()
         {
-            get { return _layout; }
-            set { _layout = value; }
+            var userDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+            var di = new DirectoryInfo(userDir);
+            di = di.CreateSubdirectory("Log2Console");
+
+            return di.FullName + Path.DirectorySeparatorChar + SettingsFileName;
         }
 
-        [Browsable(false)]
-        public Dictionary<string, int> ColumnProperties
+        public void Save()
         {
-            get
+            var settingsFilePath = GetSettingsFilePath();
+            using (var file = File.CreateText(settingsFilePath))
             {
-                if (_columnProperties == null)
-                    UpdateColumnPropeties();
-                return _columnProperties;
-            }
-            set { _columnProperties = value; }
-        }
-
-        [Browsable(false)]
-        public Dictionary<string, FieldType> CsvHeaderFieldTypes
-        {
-            get
-            {
-                if (_csvHeaderFieldTypes == null)
-                    UpdateCsvColumnHeader();
-                return _csvHeaderFieldTypes;
-            }
-            set { _csvHeaderFieldTypes = value; }
-        }
-
-        [Browsable(false)]
-        public Dictionary<string, string> SourceFileLocationMap
-        {
-            get
-            {
-                if (_sourceCodeLocationMap == null)
-                    UpdateSourceCodeLocationMap();
-                return _sourceCodeLocationMap;
-            }
-            set { _sourceCodeLocationMap = value; }
-        }
-
-        private void UpdateColumnPropeties()
-        {
-            _columnProperties = new Dictionary<string, int>();
-            for(int i=0; i<ColumnConfiguration.Length; i++)
-            {
-                try
+                var serializer = new JsonSerializer
                 {
-                    if (ColumnConfiguration[i].Field == LogMessageField.Properties)
-                        _columnProperties.Add(ColumnConfiguration[i].Property, i);
-                }
-                catch(Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "Error Configuring Columns");
-                }
+                    Formatting = Formatting.Indented, TypeNameHandling = TypeNameHandling.Auto
+                };
+                serializer.Serialize(file, this);
             }
         }
 
-        private void UpdateCsvColumnHeader()
+        public void Close()
         {
-            _csvHeaderFieldTypes = new Dictionary<string, FieldType>();
-            foreach (var column in CsvHeaderColumns)
+            foreach (var receiver in Receivers)
             {
-                _csvHeaderFieldTypes.Add(column.Name, column);
+                receiver.Detach();
+                receiver.Terminate();
             }
-        }
 
-        private void UpdateSourceCodeLocationMap()
-        {
-            _sourceCodeLocationMap = new Dictionary<string, string>();
-            foreach (var map in SourceLocationMapConfiguration)
-            {
-                _sourceCodeLocationMap.Add(map.LogSource, map.LocalSource);
-            }
+            Receivers.Clear();
         }
     }
 }

@@ -3,100 +3,74 @@ using System.Collections.Generic;
 using System.Text;
 using Log2Console.Settings;
 
-
 namespace Log2Console.Log
 {
     public class LogMessage
     {
         /// <summary>
-        /// The Line Number of the Log Message
+        ///     The CallSite Class
         /// </summary>
-        public ulong SequenceNr;
+        public string CallSiteClass { get; set; } = string.Empty;
 
         /// <summary>
-        /// Logger Name.
+        ///     The CallSite Method in which the Log is made
         /// </summary>
-        public string LoggerName;
+        public string CallSiteMethod { get; set; } = string.Empty;
 
         /// <summary>
-        /// Root Logger Name.
+        ///     An exception message to associate to this message.
         /// </summary>
-        public string RootLoggerName;
+        public string ExceptionString { get; set; } = string.Empty;
 
         /// <summary>
-        /// Log Level.
+        ///     Log Level.
         /// </summary>
-        public LogLevelInfo Level;
+        public LogLevelInfo Level { get; set; } = LogLevels.Instance[LogLevel.Error];
 
         /// <summary>
-        /// Log Message.
+        ///     Logger Name.
         /// </summary>
-        public string Message;
+        public string LoggerName { get; set; } = "Unknown";
 
         /// <summary>
-        /// Thread Name.
+        ///     Log Message.
         /// </summary>
-        public string ThreadName;
+        public string Message { get; set; } = "Unknown";
 
         /// <summary>
-        /// Time Stamp.
+        ///     Properties collection.
         /// </summary>
-        public DateTime TimeStamp;
+        public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
 
         /// <summary>
-        /// Properties collection.
+        ///     Root Logger Name.
         /// </summary>
-        public Dictionary<string, string> Properties = new Dictionary<string, string>();
+        public string RootLoggerName { get; set; } = "Unknown";
 
         /// <summary>
-        /// An exception message to associate to this message.
+        ///     The Line Number of the Log Message
         /// </summary>
-        public string ExceptionString;
+        public ulong SequenceNr { get; set; }
 
         /// <summary>
-        /// The CallSite Class
+        ///     The Line of the Source File
         /// </summary>
-        public string CallSiteClass;
-
+        public uint SourceFileLineNr { get; set; }
 
         /// <summary>
-        /// The CallSite Method in which the Log is made
+        ///     The Name of the Source File
         /// </summary>
-        public string CallSiteMethod;
+        public string SourceFileName { get; set; } = string.Empty;
 
         /// <summary>
-        /// The Name of the Source File
+        ///     Thread Name.
         /// </summary>
-        public string SourceFileName;
+        public string ThreadName { get; set; } = string.Empty;
 
         /// <summary>
-        /// The Line of the Source File
+        ///     Time Stamp.
         /// </summary>
-        public uint SourceFileLineNr;
-
-        public void CheckNull()
-        {
-            if (string.IsNullOrEmpty(LoggerName))
-                LoggerName = "Unknown";
-            if (string.IsNullOrEmpty(RootLoggerName))
-                RootLoggerName = "Unknown";
-            if (string.IsNullOrEmpty(Message))
-                Message = "Unknown";
-            if (string.IsNullOrEmpty(ThreadName))
-                ThreadName = string.Empty;
-            if (string.IsNullOrEmpty(ExceptionString))
-                ExceptionString = string.Empty;
-            if (string.IsNullOrEmpty(ExceptionString))
-                ExceptionString = string.Empty;
-            if (string.IsNullOrEmpty(CallSiteClass))
-                CallSiteClass = string.Empty;
-            if (string.IsNullOrEmpty(CallSiteMethod))
-                CallSiteMethod = string.Empty;
-            if (string.IsNullOrEmpty(SourceFileName))
-                SourceFileName = string.Empty;
-            if (Level == null)
-                Level = LogLevels.Instance[(LogLevel.Error)];
-        }
+        public DateTime TimeStamp { get; set; }
 
         public override string ToString()
         {
@@ -106,12 +80,13 @@ namespace Log2Console.Log
                 sb.Append(GetInformation(fieldType));
                 sb.Append("\t");
             }
+
             return sb.ToString();
         }
 
         private string GetInformation(FieldType fieldType)
         {
-            string result = string.Empty;
+            string result;
             switch (fieldType.Field)
             {
                 case LogMessageField.SequenceNr:
@@ -151,9 +126,12 @@ namespace Log2Console.Log
                     result = SourceFileLineNr.ToString();
                     break;
                 case LogMessageField.Properties:
-                    result = Properties.ToString();
+                    result = Properties.ContainsKey(fieldType.Property) ? Properties[fieldType.Property] : "";
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
+
             return result;
         }
 
@@ -166,12 +144,22 @@ namespace Log2Console.Log
                 sb.Append(@"{\rtf1\ansi ");
                 foreach (var fieldType in UserSettings.Instance.MessageDetailConfiguration)
                 {
-                    var info = GetInformation(fieldType).Replace(@"\", @"\\").Replace("{", @"\{").Replace("}", @"\}");
-                    sb.Append(@"\b " + fieldType.Field + @": \b0 ");
-                    if (info.Length > 40)
-                        sb.Append(@" \line ");
-                    sb.Append(info + @" \line ");
+                    var info = GetInformation(fieldType).Replace(@"\", @"\\").Replace("{", @"\{").Replace("}", @"\}")
+                        .Replace(Environment.NewLine, @" \line ");
+
+                    if (fieldType.Field == LogMessageField.Properties && !string.IsNullOrWhiteSpace(info) ||
+                        fieldType.Field != LogMessageField.Properties)
+                    {
+                        sb.Append(@"\b " + fieldType.Name + @": \b0 ");
+                        if (info.Length > 40)
+                        {
+                            sb.Append(@" \line ");
+                        }
+
+                        sb.Append(info + @" \line ");
+                    }
                 }
+
                 sb.Append(@"}");
             }
             else
@@ -181,10 +169,14 @@ namespace Log2Console.Log
                     var info = GetInformation(fieldType);
                     sb.Append(fieldType.Field + ": ");
                     if (info.Length > 40)
+                    {
                         sb.AppendLine();
+                    }
+
                     sb.AppendLine(info);
                 }
             }
+
             return sb.ToString();
         }
     }

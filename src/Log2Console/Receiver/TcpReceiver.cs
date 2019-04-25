@@ -7,73 +7,49 @@ using System.Threading;
 
 namespace Log2Console.Receiver
 {
-    [Serializable]
     [DisplayName("TCP (IP v4 and v6)")]
     public class TcpReceiver : BaseReceiver
     {
-        #region Port Property
+        #region Properties
 
-        int _port = 4505;
         [Category("Configuration")]
         [DisplayName("TCP Port Number")]
         [DefaultValue(4505)]
-        public int Port
-        {
-            get { return _port; }
-            set { _port = value; }
-        }
+        public int Port { get; set; } = 4505;
 
-        #endregion
-
-        #region IpV6 Property
-
-        bool _ipv6;
         [Category("Configuration")]
         [DisplayName("Use IPv6 Addresses")]
         [DefaultValue(false)]
-        public bool IpV6
-        {
-            get { return _ipv6; }
-            set { _ipv6 = value; }
-        }
+        public bool IpV6 { get; set; } = false;
 
-        private int _bufferSize = 10000;
         [Category("Configuration")]
         [DisplayName("Receive Buffer Size")]
         [DefaultValue(10000)]
-        public int BufferSize
-        {
-            get { return _bufferSize; }
-            set { _bufferSize = value; }
-        }
+        public int BufferSize { get; set; } = 10000;
 
-        #endregion
+        #endregion Properties
 
         #region IReceiver Members
 
         [Browsable(false)]
-        public override string SampleClientConfig
-        {
-            get
-            {
-                return
-                    "Configuration for NLog:" + Environment.NewLine +
-                    "<target name=\"TcpOutlet\" xsi:type=\"NLogViewer\" address=\"tcp://localhost:4505\"/>";
-            }
-        }
+        public override string SampleClientConfig =>
+            "Configuration for NLog:" + Environment.NewLine +
+            "<target name=\"TcpOutlet\" xsi:type=\"NLogViewer\" address=\"tcp://localhost:4505\"/>";
 
-        [NonSerialized]
-        Socket _socket;
+        private Socket _socket;
 
         public override void Initialize()
         {
             if (_socket != null) return;
 
-            _socket = new Socket(_ipv6 ? AddressFamily.InterNetworkV6 : AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _socket.ExclusiveAddressUse = true;
-            _socket.Bind(new IPEndPoint(_ipv6 ? IPAddress.IPv6Any : IPAddress.Any, _port));
+            _socket = new Socket(IpV6 ? AddressFamily.InterNetworkV6 : AddressFamily.InterNetwork, SocketType.Stream,
+                ProtocolType.Tcp)
+            {
+                ExclusiveAddressUse = true
+            };
+            _socket.Bind(new IPEndPoint(IpV6 ? IPAddress.IPv6Any : IPAddress.Any, Port));
             _socket.Listen(100);
-            _socket.ReceiveBufferSize = _bufferSize;
+            _socket.ReceiveBufferSize = BufferSize;
 
             var args = new SocketAsyncEventArgs();
             args.Completed += AcceptAsyncCompleted;
@@ -81,31 +57,37 @@ namespace Log2Console.Receiver
             _socket.AcceptAsync(args);
         }
 
-        void AcceptAsyncCompleted(object sender, SocketAsyncEventArgs e)
+        private void AcceptAsyncCompleted(object sender, SocketAsyncEventArgs e)
         {
             if (_socket == null || e.SocketError != SocketError.Success) return;
 
-            new Thread(Start) { IsBackground = true }.Start(e.AcceptSocket);
+            new Thread(Start)
+            {
+                IsBackground = true
+            }.Start(e.AcceptSocket);
 
             e.AcceptSocket = null;
             _socket.AcceptAsync(e);
         }
 
-        void Start(object newSocket)
+        private void Start(object newSocket)
         {
             try
             {
                 using (var socket = (Socket)newSocket)
-                using (var ns = new NetworkStream(socket, FileAccess.Read, false))
-                    while (_socket != null)
+                {
+                    using (var ns = new NetworkStream(socket, FileAccess.Read, false))
                     {
-                        var logMsg = ReceiverUtils.ParseLog4JXmlLogEvent(ns, "TcpLogger");
-                        logMsg.RootLoggerName = logMsg.LoggerName;
-                        logMsg.LoggerName = string.Format(":{1}.{0}", logMsg.LoggerName, _port);
+                        while (_socket != null)
+                        {
+                            var logMsg = ReceiverUtils.ParseLog4JXmlLogEvent(ns, "TcpLogger");
+                            logMsg.RootLoggerName = logMsg.LoggerName;
+                            logMsg.LoggerName = string.Format(":{1}.{0}", logMsg.LoggerName, Port);
 
-                        if (Notifiable != null)
-                            Notifiable.Notify(logMsg);
+                            Notifiable?.Notify(logMsg);
+                        }
                     }
+                }
             }
             catch (IOException)
             {
@@ -124,6 +106,6 @@ namespace Log2Console.Receiver
             _socket = null;
         }
 
-        #endregion
+        #endregion IReceiver Members
     }
 }

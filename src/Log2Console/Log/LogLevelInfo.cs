@@ -1,19 +1,9 @@
-﻿using System;
 using System.Drawing;
 
 namespace Log2Console.Log
 {
-    [Serializable]
     public class LogLevelInfo
     {
-        public LogLevel Level;
-        public string Name;
-        public Color Color;
-        public int Value;
-        public int RangeMin;
-        public int RangeMax;
-
-
         public LogLevelInfo(LogLevel level, Color color)
         {
             Level = level;
@@ -32,31 +22,43 @@ namespace Log2Console.Log
             RangeMax = rangeMax;
         }
 
+        public int Value { get; }
+        public Color Color { get; set; }
+        public LogLevel Level { get; set; }
+        public string Name { get; set; }
+        public int RangeMax { get; set; }
+        public int RangeMin { get; set; }
+
         public override bool Equals(object obj)
         {
-            if (obj is LogLevelInfo)
-                return ((obj as LogLevelInfo) == this);
+            if (obj is LogLevelInfo info)
+            {
+                return info == this;
+            }
+
             return base.Equals(obj);
         }
 
-        public override int GetHashCode()
-        {
-            return Value.GetHashCode();
-        }
+        public override int GetHashCode() => Value.GetHashCode();
 
         public static bool operator ==(LogLevelInfo first, LogLevelInfo second)
         {
-            if (((object)first == null) || ((object)second == null))
-                return (((object)first == null) && ((object)second == null));
-            return (first.Value == second.Value);
+            if (first is null || second is null)
+            {
+                return first is null && second is null;
+            }
+
+            return first.Value == second.Value;
         }
 
         public static bool operator !=(LogLevelInfo first, LogLevelInfo second)
         {
-            if (((object)first == null) || ((object)second == null))
-                return !(((object)first == null) && ((object)second == null));
+            if (first is null || second is null)
+            {
+                return !(first is null && second is null);
+            }
+
             return first.Value != second.Value;
         }
     }
-
 }

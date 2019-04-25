@@ -5,98 +5,98 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
-using Log2Console.Log;
-
-
 namespace Log2Console.Receiver
 {
-    [Serializable]
     [DisplayName("UDP (IP v4 and v6)")]
     public class UdpReceiver : BaseReceiver
     {
-        [NonSerialized]
-        private Thread _worker;
-        [NonSerialized]
-        private UdpClient _udpClient;
-        [NonSerialized]
         private IPEndPoint _remoteEndPoint;
 
-        private bool _ipv6;
-        private int _port = 7071;
-        private string _address = String.Empty;
-        private int _bufferSize = 10000;
+        private UdpClient _udpClient;
 
+        private Thread _worker;
 
         [Category("Configuration")]
         [DisplayName("UDP Port Number")]
         [DefaultValue(7071)]
-        public int Port
-        {
-            get { return _port; }
-            set { _port = value; }
-        }
+        public int Port { get; set; } = 7071;
 
         [Category("Configuration")]
         [DisplayName("Use IPv6 Addresses")]
         [DefaultValue(false)]
-        public bool IpV6
-        {
-            get { return _ipv6; }
-            set { _ipv6 = value; }
-        }
+        public bool IpV6 { get; set; }
 
         [Category("Configuration")]
         [DisplayName("Multicast Group Address (Optional)")]
-        public string Address
-        {
-            get { return _address; }
-            set { _address = value; }
-        }
+        public string Address { get; set; } = string.Empty;
 
         [Category("Configuration")]
         [DisplayName("Receive Buffer Size")]
-        public int BufferSize
+        public int BufferSize { get; set; } = 10000;
+
+        private void Start()
         {
-            get { return _bufferSize; }
-            set { _bufferSize = value; }
+            while (_udpClient != null && _remoteEndPoint != null)
+            {
+                try
+                {
+                    var buffer = _udpClient.Receive(ref _remoteEndPoint);
+                    var loggingEvent = Encoding.UTF8.GetString(buffer);
+
+                    if (Notifiable == null)
+                    {
+                        continue;
+                    }
+
+                    var logMsg = ReceiverUtils.ParseLog4JXmlLogEvent(loggingEvent, "UdpLogger");
+                    logMsg.RootLoggerName = _remoteEndPoint.Address.ToString().Replace(".", "-");
+                    logMsg.LoggerName = $"{_remoteEndPoint.Address.ToString().Replace(".", "-")}_{logMsg.LoggerName}";
+                    Notifiable.Notify(logMsg);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                    return;
+                }
+            }
         }
 
 
         #region IReceiver Members
 
         [Browsable(false)]
-        public override string SampleClientConfig
-        {
-            get
-            {
-                return
-                    "Configuration for log4net:" + Environment.NewLine +
-                    "<appender name=\"UdpAppender\" type=\"log4net.Appender.UdpAppender\">" + Environment.NewLine +
-                    "    <remoteAddress value=\"127.0.0.1\" />" + Environment.NewLine +
-                    "    <remotePort value=\"7071\" />" + Environment.NewLine +
-                    "    <layout type=\"log4net.Layout.XmlLayoutSchemaLog4j\" />" + Environment.NewLine +
-                    "</appender>" + Environment.NewLine +
-                    Environment.NewLine +
-                    "And add appender to log4net <root>:"+ Environment.NewLine +
-                    "<appender-ref ref=\"UdpAppender\" />";
-            }
-        }
+        public override string SampleClientConfig =>
+            "Configuration for log4net:" + Environment.NewLine +
+            "<appender name=\"UdpAppender\" type=\"log4net.Appender.UdpAppender\">" + Environment.NewLine +
+            "    <remoteAddress value=\"127.0.0.1\" />" + Environment.NewLine +
+            "    <remotePort value=\"7071\" />" + Environment.NewLine +
+            "    <layout type=\"log4net.Layout.XmlLayoutSchemaLog4j\" />" + Environment.NewLine +
+            "</appender>" + Environment.NewLine +
+            Environment.NewLine +
+            "And add appender to log4net <root>:" + Environment.NewLine +
+            "<appender-ref ref=\"UdpAppender\" />";
 
         public override void Initialize()
         {
-            if ((_worker != null) && _worker.IsAlive)
+            if (_worker != null && _worker.IsAlive)
+            {
                 return;
+            }
 
-            // Init connexion here, before starting the thread, to know the status now
+            // Init connection here, before starting the thread, to know the status now
             _remoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
-            _udpClient = _ipv6 ? new UdpClient(_port, AddressFamily.InterNetworkV6) : new UdpClient(_port);
-            _udpClient.Client.ReceiveBufferSize = _bufferSize;
-            if (!String.IsNullOrEmpty(_address))
-                _udpClient.JoinMulticastGroup(IPAddress.Parse(_address));
+            _udpClient = IpV6 ? new UdpClient(Port, AddressFamily.InterNetworkV6) : new UdpClient(Port);
+            _udpClient.Client.ReceiveBufferSize = BufferSize;
+            if (!string.IsNullOrEmpty(Address))
+            {
+                _udpClient.JoinMulticastGroup(IPAddress.Parse(Address));
+            }
 
             // We need a working thread
-            _worker = new Thread(Start);
-            _worker.IsBackground = true;
+            _worker = new Thread(Start)
+            {
+                IsBackground = true
+            };
             _worker.Start();
         }
 
@@ -110,44 +110,14 @@ namespace Log2Console.Receiver
                 _remoteEndPoint = null;
             }
 
-            if ((_worker != null) && _worker.IsAlive)
+            if (_worker != null && _worker.IsAlive)
+            {
                 _worker.Abort();
+            }
+
             _worker = null;
         }
 
-        #endregion
-
-        public void Clear()
-        {
-        }
-
-        private void Start()
-        {
-            while ((_udpClient != null) && (_remoteEndPoint != null))
-            {
-                try
-                {
-                    byte[] buffer = _udpClient.Receive(ref _remoteEndPoint);
-                    string loggingEvent = Encoding.UTF8.GetString(buffer);
-
-                    //Console.WriteLine(loggingEvent);
-                    //  Console.WriteLine("Count: " + count++);
-
-                    if (Notifiable == null)
-                        continue;
-
-                    LogMessage logMsg = ReceiverUtils.ParseLog4JXmlLogEvent(loggingEvent, "UdpLogger");
-                    logMsg.RootLoggerName = _remoteEndPoint.Address.ToString().Replace(".", "-");
-                    logMsg.LoggerName = string.Format("{0}_{1}", _remoteEndPoint.Address.ToString().Replace(".", "-"), logMsg.LoggerName);
-                    Notifiable.Notify(logMsg);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex);
-                    return;
-                }
-            }
-        }
-
+        #endregion IReceiver Members
     }
 }

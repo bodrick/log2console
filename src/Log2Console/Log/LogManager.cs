@@ -1,100 +1,50 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Windows.Forms;
-
 
 namespace Log2Console.Log
 {
     public class LogManager : ILogManager
     {
-        private static LogManager _instance;
-
-        private LoggerItem _rootLoggerItem;
-        private Dictionary<string, LoggerItem> _fullPathLoggers;
-
+        private static readonly Lazy<ILogManager> instance = new Lazy<ILogManager>(() => new LogManager());
 
         private LogManager()
         {
         }
 
-        internal static ILogManager Instance
-        {
-            get
-            {
-                if (_instance == null)
-                    _instance = new LogManager();
-                return _instance;
-            }
-        }
+        internal LoggerItem RootLoggerItem { get; set; }
 
-        internal LoggerItem RootLoggerItem
-        {
-            get { return _rootLoggerItem; }
-            set { _rootLoggerItem = value; }
-        }
+        public static ILogManager Instance => instance.Value;
 
-        public void Initialize(ILoggerView loggerView, ListView logListView)
-        {
-            // Root Logger
-            _rootLoggerItem = LoggerItem.CreateRootLoggerItem("Root", loggerView, logListView);
-
-            // Quick Access Logger Collection
-            _fullPathLoggers = new Dictionary<string, LoggerItem>();
-        }
+        public void Initialize(ILoggerView loggerView, ListView logListView) =>
+            RootLoggerItem = LoggerItem.CreateRootLoggerItem("Root", loggerView, logListView);
 
         public void ClearAll()
         {
             ClearLogMessages();
 
             RootLoggerItem.ClearAll();
-            _fullPathLoggers.Clear();
         }
 
-        public void ClearLogMessages()
-        {
-            RootLoggerItem.ClearAllLogMessages();
-        }
+        public void ClearLogMessages() => RootLoggerItem.ClearAllLogMessages();
 
-        public void DeactivateLogger()
-        {
-            RootLoggerItem.Enabled = false;
-        }
+        public void DeactivateLogger() => RootLoggerItem.Enabled = false;
 
+        /// <exception cref="NullReferenceException">No Logger for this Log Message.</exception>
         public void ProcessLogMessage(LogMessage logMsg)
         {
-            // Check 1st in the global LoggerPath/Logger dictionary
-            LoggerItem logger;
-            logMsg.CheckNull();
-
-            if (!_fullPathLoggers.TryGetValue(logMsg.LoggerName, out logger))
-            {
-                // Not found, create one
-                logger = RootLoggerItem.GetOrCreateLogger(logMsg.LoggerName);
-            }
+            var logger = RootLoggerItem.GetOrCreateLogger(logMsg.LoggerName);
             if (logger == null)
-                throw new Exception("No Logger for this Log Message.");
+            {
+                throw new NullReferenceException("No Logger for this Log Message.");
+            }
 
             logger.AddLogMessage(logMsg);
         }
 
+        public void SearchText(string str) => RootLoggerItem.SearchText(str);
 
-        public void SearchText(string str)
-        {
-            _rootLoggerItem.SearchText(str);
-        }
+        public void UpdateLogLevel() => RootLoggerItem?.UpdateLogLevel();
 
-
-        public void UpdateLogLevel()
-        {
-            if (RootLoggerItem == null)
-                return;
-
-            RootLoggerItem.UpdateLogLevel();
-        }
-
-        public void SetRootLoggerName(string name)
-        {
-            RootLoggerItem.Name = name;
-        }
+        public void SetRootLoggerName(string name) => RootLoggerItem.Name = name;
     }
 }
