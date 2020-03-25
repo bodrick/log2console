@@ -609,7 +609,7 @@ namespace Log2Console
 
         private void OnTaskbarProgressTimer(object o)
         {
-            if (_isWin7OrLater)
+            if (_isWin7OrLater && !Debugger.IsAttached)
             {
                 TaskbarManager.Instance.SetProgressState(_addedLogMessage
                     ? TaskbarProgressBarState.Indeterminate
@@ -676,7 +676,8 @@ namespace Log2Console
                 {
                     foreach (var kvp in logMsgItem.Message.Properties)
                     {
-                        sb.AppendFormat("{0} = {1}{2}", kvp.Key, kvp.Value, "\\line\n");
+                        var value = kvp.Value.Replace("\r\n", @" \line ").Replace("\n", @" \line ");
+                        sb.AppendFormat(@"\b {0} \b0 = {1}{2}", kvp.Key, value, "\\line\n");
                     }
                 }
 
