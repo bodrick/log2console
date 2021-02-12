@@ -918,7 +918,7 @@ namespace Log2Console
             if (string.IsNullOrEmpty(logDetailTextBox.Text))
                 return;
 
-            Clipboard.SetText(logDetailTextBox.Text);
+            Clipboard.SetDataObject(logDetailTextBox.Text, false, 5, 200);
         }
 
         private void aboutBtn_Click(object sender, EventArgs e)
@@ -1280,7 +1280,7 @@ namespace Log2Console
                     builder.AppendLine(logMsgItem.Message.ToString());
             }
 
-            Clipboard.SetText(builder.ToString());
+            Clipboard.SetDataObject(builder.ToString(), false, 5, 200);
         }
 
         private delegate void NotifyLogMsgCallback(LogMessage logMsg);
