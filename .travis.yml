@@ -1,0 +1,5 @@
+language: csharp
+solution: src/Log2Console.sln
+before_script:
+  - nuget restore src/Log2Console.sln
+
