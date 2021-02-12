@@ -1,23 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <Configurations>Debug;Release</Configurations>
     <OutputType>WinExe</OutputType>
 	<ApplicationIcon>res\windowb.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
-    <Version>1.6.0.4</Version>
+    <Version>1.6.0.5</Version>
     <Authors>Remy Baudet aka Statyk7</Authors>
     <Company />
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.8" />
     <PackageReference Include="NetIde.ICSharpCode.TextEditor" Version="3.3.7.6487" />
-    <PackageReference Include="log4net" Version="2.0.8" />
+    <PackageReference Include="log4net" Version="2.0.12" />
     <PackageReference Include="NetIde.ICSharpCode.TextEditor" Version="3.3.7.6487" />
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="RichTextBoxLinks" Version="1.0.0" />
-    <PackageReference Include="Serilog" Version="2.7.1" />
+    <PackageReference Include="Serilog" Version="2.10.0" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Configuration.Install" />

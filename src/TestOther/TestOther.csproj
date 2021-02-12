@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <Configurations>Debug;Release</Configurations>
     <OutputType>Exe</OutputType>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 </Project>
